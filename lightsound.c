@@ -34,46 +34,47 @@ char * GPIO_VAL[] = {GPIO67_VAL, GPIO68_VAL, GPIO44_VAL};
 int GPIO_NUM[] = {67, 68, 44};
 
 int main() {
-
-  // Activate the GPIOs, switch them to output, and turn them off.
-  for (int i = 0; i < 3; i++) {
-    activateGPIO(GPIO_NUM[i]);
-    toggleIO(GPIO_DIR[i]);
-    setLED(GPIO_VAL[i], "0");
-  }
-
-  // Activate PWM and set it to run
-  activatePWM();
-  setPWMRun(1);
-
-  // Loop from 0 to 7 and display the number using LEDs and play tones
-  for (int i = 0; i < 8; i++) {
-    int cur = i;
-
-    // Turn on and off appropriate LEDs
-    for (int j = 2; j >= 0; j--) {
-      if (cur % 2 == 1) {
-	setLED(GPIO_VAL[j], "1");
-      } else {
-	setLED(GPIO_VAL[j], "0");
-      }
-      cur /= 2;
+  while (1) {
+    // Activate the GPIOs, switch them to output, and turn them off.
+    for (int i = 0; i < 3; i++) {
+      activateGPIO(GPIO_NUM[i]);
+      toggleIO(GPIO_DIR[i]);
+      setLED(GPIO_VAL[i], "0");
     }
 
-    // Period increments up by 200000
-    setPeriod(1300000 + i * 200000);
+    // Activate PWM and set it to run
+    activatePWM();
+    setPWMRun(1);
 
-    // Wait for 1 second
-    sleep(1);      
+    // Loop from 0 to 7 and display the number using LEDs and play tones
+    for (int i = 0; i < 8; i++) {
+      int cur = i;
+
+      // Turn on and off appropriate LEDs
+      for (int j = 2; j >= 0; j--) {
+	if (cur % 2 == 1) {
+	  setLED(GPIO_VAL[j], "1");
+	} else {
+	  setLED(GPIO_VAL[j], "0");
+	}
+	cur /= 2;
+      }
+
+      // Period increments up by 200000
+      setPeriod(1300000 + i * 200000);
+
+      // Wait for 1 second
+      sleep(1);      
+    }
+
+    // Turn off all the LEDs
+    for (int i = 0; i < 3; i++) {
+      setLED(GPIO_VAL[i], "0");
+    }
+
+    // Turn off the buzzer
+    setPWMRun(0);
   }
-
-  // Turn off all the LEDs
-  for (int i = 0; i < 3; i++) {
-    setLED(GPIO_VAL[i], "0");
-  }
-
-  // Turn off the buzzer
-  setPWMRun(0);
 }
 
 // Create configuration folders for PWM EHRPWM1A
