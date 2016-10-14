@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#define GPIO20_VAL "../../sys/class/gpio/gpio20/value"
+
+#define GPIO20_DIR "../../sys/class/gpio/gpio20/direction"
+
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
 // Activates the GPIO associated with gnum
