@@ -1,7 +1,7 @@
 #ifndef JITTER_H
 #define JITTER_H
 
-#include <time.h>
+#include <unistd.h>
 #include "bbcommon.h"
 
 #endif
