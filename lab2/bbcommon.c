@@ -12,3 +12,14 @@ void activateGPIO(int gnum) {
   fprintf(f, "%d", gnum);
   fclose(f);
 }
+
+void setGPIO(char * path, char * flag) {
+  // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(path, "w");
+  }
+  
+  fprintf(f, flag);
+  fclose(f);
+}

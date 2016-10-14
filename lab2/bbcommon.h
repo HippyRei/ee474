@@ -9,4 +9,7 @@
 // Activates the GPIO associated with gnum
 void activateGPIO(int gnum);
 
+// Writes flag to the file associated with path
+void setGPIO(char * path, char * flag);
+
 #endif
