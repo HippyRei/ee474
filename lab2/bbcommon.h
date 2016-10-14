@@ -2,7 +2,6 @@
 #define BBCOMMON_H
 
 #include <stdio.h>
-#include <unistd.h>
 
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
