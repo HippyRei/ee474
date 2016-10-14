@@ -42,4 +42,6 @@ void isetGPIO(char * path, int flag);
 
 void initializeLCD();
 
+void setPins(int * config, int len);
+
 #endif

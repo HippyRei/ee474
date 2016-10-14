@@ -1,7 +1,6 @@
 #include "jitter.h"
 
 int main() {
-  
   // Initialize GPIO 20
   activateGPIO(20);
 

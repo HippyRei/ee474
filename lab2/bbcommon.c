@@ -47,6 +47,22 @@ void initializeLCD() {
     setGPIO(GPIO_DIRS[i], "out");
   }
 
+  int config[] = {0, 0, 0, 0, 1, 1, 0, 0, 0, 0};
+  setPins(config, 10);
+
+  sleep(0.005);
+
+  setPins(config, 10);
+
+  sleep(0.0002);
+
+  setPins(config, 10);
+
+  sleep(1);
+
+  int config2[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1};
+
+  setPins(config2, 10);
 }
 
 void setPins(int * config, int len) {
