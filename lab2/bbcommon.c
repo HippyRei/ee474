@@ -20,6 +20,6 @@ void setGPIO(char * path, char * flag) {
     f =  fopen(path, "w");
   }
   
-  fprintf(f, flag);
+  fprintf(f, "%s", flag);
   fclose(f);
 }
