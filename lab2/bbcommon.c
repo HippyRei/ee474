@@ -92,6 +92,7 @@ void initializeLCD() {
 
   // Clear display
   writeCommand(0x1);
+  //sleep(0.016);
 
   // Entry Mode Set
   writeCommand(0x5);
