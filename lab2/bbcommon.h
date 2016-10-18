@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define NUM_DB 8
+
 #define GPIO20_VAL "../../sys/class/gpio/gpio20/value"
 #define DB0_VAL "../../sys/class/gpio/gpio66/value"
 #define DB1_VAL "../../sys/class/gpio/gpio69/value"
@@ -42,6 +44,16 @@ void isetGPIO(char * path, int flag);
 
 void initializeLCD();
 
-void setPins(int * config, int len);
+void setPins(int config);
+
+void setRS(int);
+
+void setRW(int);
+
+void setE(int);
+
+void flipE();
+
+void writeCommand(int);
 
 #endif

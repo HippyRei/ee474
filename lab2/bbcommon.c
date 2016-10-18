@@ -1,11 +1,17 @@
 // A collection of beaglebone operations used by multiple programs
 #include "bbcommon.h"
 
-int GPIO_NUMS[] = {49, 117, 26, 44, 68, 67, 47, 45, 69, 66, 115};
+int FLAG_GPIOS[] = {115, 49, 117};
 
-char * GPIO_VALS[] = {RS_VAL, RW_VAL, DB7_VAL, DB6_VAL, DB5_VAL, DB4_VAL, DB3_VAL, DB2_VAL, DB1_VAL, DB0_VAL, E_VAL};
+char * FLAG_VALS[] = {E_VAL, RS_VAL, RW_VAL};
 
-char * GPIO_DIRS[] = {RS_DIR, RW_DIR, DB7_DIR, DB6_DIR, DB5_DIR, DB4_DIR, DB3_DIR, DB2_DIR, DB1_DIR, DB0_DIR, E_DIR};
+char * FLAG_DIRS[] = {E_DIR, RS_DIR, RW_DIR};
+
+int DB_GPIOS[] = {26, 44, 68, 67, 47, 45, 69, 66};
+
+char * DB_VALS[] = {DB7_VAL, DB6_VAL, DB5_VAL, DB4_VAL, DB3_VAL, DB2_VAL, DB1_VAL, DB0_VAL};
+
+char * DB_DIRS[] = {DB7_DIR, DB6_DIR, DB5_DIR, DB4_DIR, DB3_DIR, DB2_DIR, DB1_DIR, DB0_DIR};
 
 void activateGPIO(int gnum) {
   // Attempt to open the file; loop until file is found
@@ -20,8 +26,8 @@ void activateGPIO(int gnum) {
 }
 
 void setGPIO(char * path, char * flag) {
-  // Attempt to open the file; loop until file is found
-  FILE *f = NULL;
+  // Attempt to open the file; loop until file is found 
+ FILE *f = NULL;
   while (f == NULL) {
     f =  fopen(path, "w");
   }
@@ -42,31 +48,85 @@ void isetGPIO(char * path, int flag) {
 }
 
 void initializeLCD() {
-  for (int i = 0; i < 11; i++) {
-    activateGPIO(GPIO_NUMS[i]);
-    setGPIO(GPIO_DIRS[i], "out");
+  // Set up GPIOs on Beaglebone
+  for (int i = 0; i < 8; i++) {
+    activateGPIO(DB_GPIOS[i]);
+    setGPIO(DB_DIRS[i], "out");
   }
 
-  int config[] = {0, 0, 0, 0, 1, 1, 0, 0, 0, 0};
-  setPins(config, 10);
+  for (int i = 0; i < 3; i++) {
+    activateGPIO(FLAG_GPIOS[i]);
+    setGPIO(FLAG_DIRS[i], "out");
+  }
+
+  // Zero out all values of GPIOs
+  setPins(0x0);
+  setRS(0);
+  setRW(0);
+
+  // Wait 15 ms after power is turned on
+  sleep(0.015);
+
+  // Write first function set command
+  setPins(0x30);
+
+  flipE();
+  
+  sleep(0.005);
+
+  // Write second function set command
+  flipE();
+
+  sleep(0.0001);
+  
+  // Write third function set command
+  flipE();
 
   sleep(0.005);
 
-  setPins(config, 10);
+  // Set to 1 line, 5x10 font
+  writeCommand(0x34);
 
-  sleep(0.0002);
+  // Display off
+  writeCommand(0x8);
 
-  setPins(config, 10);
+  // Clear display
+  writeCommand(0x1);
 
-  sleep(1);
+  // Entry Mode Set
+  writeCommand(0x5);
 
-  int config2[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1};
-
-  setPins(config2, 10);
+  // Display on
+  writeCommand(0xF);
 }
 
-void setPins(int * config, int len) {
-  for (int i = 0; i < len; i++) {
-    isetGPIO(GPIO_VALS[i], config[i]);
+void flipE() {
+  setE(1);
+  sleep(0.0000005);
+  setE(0);
+}
+
+void setRS(int flag) {
+  isetGPIO(RS_VAL, flag);
+}
+
+void setRW(int flag) {
+  isetGPIO(RW_VAL, flag);
+}
+
+void setE(int flag) {
+  isetGPIO(E_VAL, flag);
+}
+
+void setPins(int config) {
+  for (int i = 0; i < NUM_DB; i++) {
+    isetGPIO(DB_VALS[NUM_DB - 1 - i], config % 2);
+    config /= 2;
   }
+}
+
+void writeCommand(int config) {
+  setPins(config);
+  flipE();
+  sleep(0.00004);
 }
