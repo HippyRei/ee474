@@ -1,8 +1,15 @@
 #ifndef BBCOMMON_H
 #define BBCOMMON_H
 
+#if __STDC_VERSION__ >= 199901L
+#define _XOPEN_SOURCE 600
+#else
+#define _XOPEN_SOURCE 500
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 
 #define NUM_DB 8
 
@@ -16,7 +23,7 @@
 #define DB6_VAL "../../sys/class/gpio/gpio44/value"
 #define DB7_VAL "../../sys/class/gpio/gpio26/value"
 #define RS_VAL "../../sys/class/gpio/gpio49/value"
-#define RW_VAL "../../sys/class/gpio/gpio117/value"
+#define RW_VAL "../../sys/class/gpio/gpio112/value"
 #define E_VAL "../../sys/class/gpio/gpio115/value"
 
 #define GPIO20_DIR "../../sys/class/gpio/gpio20/direction"
@@ -29,7 +36,7 @@
 #define DB6_DIR "../../sys/class/gpio/gpio44/direction"
 #define DB7_DIR "../../sys/class/gpio/gpio26/direction"
 #define RS_DIR "../../sys/class/gpio/gpio49/direction"
-#define RW_DIR "../../sys/class/gpio/gpio117/direction"
+#define RW_DIR "../../sys/class/gpio/gpio112/direction"
 #define E_DIR "../../sys/class/gpio/gpio115/direction"
 
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"

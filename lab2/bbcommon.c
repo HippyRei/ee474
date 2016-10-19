@@ -1,7 +1,7 @@
 // A collection of beaglebone operations used by multiple programs
 #include "bbcommon.h"
 
-int FLAG_GPIOS[] = {115, 49, 117};
+int FLAG_GPIOS[] = {115, 49, 112};
 
 char * FLAG_VALS[] = {E_VAL, RS_VAL, RW_VAL};
 
@@ -48,6 +48,8 @@ void isetGPIO(char * path, int flag) {
 }
 
 void initializeLCD() {
+  struct timespec t, t2;
+
   // Set up GPIOs on Beaglebone
   for (int i = 0; i < 8; i++) {
     activateGPIO(DB_GPIOS[i]);
@@ -64,35 +66,39 @@ void initializeLCD() {
   setRS(0);
   setRW(0);
 
+  t.tv_sec = 0;
+  t.tv_nsec = 15000000;
   // Wait 15 ms after power is turned on
-  sleep(0.015);
+  nanosleep(&t, &t2);
 
   // Write first function set command
   setPins(0x30);
 
   flipE();
-  
-  sleep(0.005);
+
+  t.tv_nsec = 5000000;
+  nanosleep(&t, &t2);
 
   // Write second function set command
   flipE();
 
-  sleep(0.0001);
+  t.tv_nsec = 100000;
+  nanosleep(&t, &t2);
   
   // Write third function set command
   flipE();
 
-  sleep(0.005);
+  t.tv_nsec = 5000000;
+  nanosleep(&t, &t2);
 
   // Set to 1 line, 5x10 font
-  writeCommand(0x34);
+  writeCommand(0x38);
 
   // Display off
   writeCommand(0x8);
 
   // Clear display
   writeCommand(0x1);
-  //sleep(0.016);
 
   // Entry Mode Set
   writeCommand(0x5);
@@ -102,8 +108,11 @@ void initializeLCD() {
 }
 
 void flipE() {
+  struct timespec t, t2;
+  t.tv_sec = 0;
+  t.tv_nsec = 500;
   setE(1);
-  sleep(0.0000005);
+  nanosleep(&t, &t2);
   setE(0);
 }
 
@@ -127,7 +136,10 @@ void setPins(int config) {
 }
 
 void writeCommand(int config) {
+  struct timespec t, t2;
+  t.tv_sec = 0;
+  t.tv_nsec = 40000;
   setPins(config);
   flipE();
-  sleep(0.00004);
+  nanosleep(&t, &t2);
 }
