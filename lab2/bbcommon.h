@@ -39,6 +39,13 @@
 #define RW_DIR "../../sys/class/gpio/gpio112/direction"
 #define E_DIR "../../sys/class/gpio/gpio115/direction"
 
+#define SHIFT_DISP_L 0x18
+#define SHIFT_DISP_R 0x1C
+#define SHIFT_CURS_L 0x10
+#define SHIFT_CURS_R 0x14
+
+#define CLEAR_DISP 0x1
+
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
 // Activates the GPIO associated with gnum
@@ -62,5 +69,9 @@ void setE(int);
 void flipE();
 
 void writeCommand(int);
+
+void writeChar(int);
+
+void writeString(char *);
 
 #endif
