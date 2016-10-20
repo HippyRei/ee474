@@ -12,23 +12,36 @@ int main() {
 
   //text_pipe = open("text_pipe", O_WRONLY);
 
-  /*
+  
   while(1) {
     for (int i = 0; i < 16; i++) {
-      write(command_pipe, "CLEAR_DISP", 10);
+      command_pipe = open("command_pipe", O_WRONLY);
+      write(command_pipe, "CLEAR_DISP\0", 11);
+      close(command_pipe);
+      printf("Got here\n");
       for (int j = 0; j < i; j++) {
-	write(command_pipe, "SHIFT_CURS_R", 12);
+	command_pipe = open("command_pipe", O_WRONLY);
+	write(command_pipe, "SHIFT_CURS_R\0", 13);
+	close(command_pipe);
       }
-      write(text_pipe, "$", 1);
+      text_pipe = open("text_pipe", O_WRONLY);
+      write(text_pipe, "$\0", 2);
+      close(text_pipe);
 
       //writeCommand(0x80 | 0x40);
       //write(text_pipe, "GET MONEY", 9);
       nanosleep(&t, &t2);
     }
   }
-  */
+  
 
+  /*
+  text_pipe = open("text_pipe", O_WRONLY);
+  write(text_pipe, "Hello\0", 6);
+  close(text_pipe);
+  
   command_pipe = open("command_pipe", O_WRONLY);
-  write(command_pipe, "SHIFT_CURS_R", 12);
+  write(command_pipe, "SHIFT_CURS_R\0", 13);
   close(command_pipe);
+  */
 }

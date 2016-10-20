@@ -9,7 +9,6 @@
 
 int main() {
   initializeLCD();
-  printf("1\n");
   
   char text_buf[MAX_LINE];
   char com_buf[MAX_LINE];
@@ -30,23 +29,31 @@ int main() {
       command_pipe = open("./command_pipe", O_RDONLY | O_NONBLOCK);
   }
 
-  while (1) {    
+  close(text_pipe);
+  close(command_pipe);
+
+  while (1) {
+    open("./text_pipe", O_RDONLY | O_NONBLOCK);
+    open("./command_pipe", O_RDONLY | O_NONBLOCK);
+    
+    FD_ZERO(&rdset);
     FD_SET(text_pipe, &rdset);
     FD_SET(command_pipe, &rdset);
 
     timeout.tv_sec = 0;
     timeout.tv_usec = 1;
     
-    select(FD_SETSIZE, NULL, &rdset, NULL, &timeout);
+    select(FD_SETSIZE, &rdset, NULL, NULL, &timeout);
     if (FD_ISSET(text_pipe, &rdset)) {
       read(text_pipe, text_buf, MAX_LINE);
+      printf("%s\n", text_buf);
 
       writeString(text_buf);
       text_buf[0] = '\0';
     }
     if (FD_ISSET(command_pipe, &rdset)) {
-      //printf("command\n");
       read(command_pipe, com_buf, MAX_LINE);
+      printf("%s\n", com_buf);
 
       if (!strcmp(com_buf, "CLEAR_DISP")) {
 	writeCommand(CLEAR_DISP);
@@ -61,5 +68,8 @@ int main() {
       }
       com_buf[0] = '\0';
     }
+
+    close(text_pipe);
+    close(command_pipe);
   }
 }
