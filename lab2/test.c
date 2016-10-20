@@ -1,7 +1,7 @@
 #include "bbcommon.h"
 
 int main() {
-  //initializeLCD();
+  initializeLCD();
 
   struct timespec t, t2;
   int text_pipe;
@@ -10,26 +10,23 @@ int main() {
   t.tv_sec = 0;
   t.tv_nsec = 200000000;
 
+  struct timespec loopt;
+  loopt.tv_sec = 1;
+  loopt.tv_nsec = 0;
+
   //text_pipe = open("text_pipe", O_WRONLY);
 
   
   while(1) {
     for (int i = 0; i < 16; i++) {
-      command_pipe = open("command_pipe", O_WRONLY);
-      write(command_pipe, "CLEAR_DISP\0", 11);
-      close(command_pipe);
-      printf("Got here\n");
+      writeCommand(CLEAR_DISP);
       for (int j = 0; j < i; j++) {
-	command_pipe = open("command_pipe", O_WRONLY);
-	write(command_pipe, "SHIFT_CURS_R\0", 13);
-	close(command_pipe);
+        writeCommand(SHIFT_CURS_R);
       }
-      text_pipe = open("text_pipe", O_WRONLY);
-      write(text_pipe, "$\0", 2);
-      close(text_pipe);
-
-      //writeCommand(0x80 | 0x40);
-      //write(text_pipe, "GET MONEY", 9);
+      writeChar((int) '$');
+      
+      writeCommand(0x80 | 0x40);
+      writeString("GET MONEY");
       nanosleep(&t, &t2);
     }
   }

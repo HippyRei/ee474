@@ -7,6 +7,8 @@
 #define _XOPEN_SOURCE 500
 #endif
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
