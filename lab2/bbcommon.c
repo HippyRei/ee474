@@ -156,9 +156,6 @@ void writeCommand(int config) {
 
 // Write a character to the LCD
 void writeChar(char c) {
-  if (c == '\n') {
-    return writeCommand(0x80 | 0x40);
-  }
   setRS(1);
   setRW(0);
   struct timespec t, t2;
