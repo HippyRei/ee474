@@ -155,13 +155,13 @@ void writeCommand(int config) {
 }
 
 // Write a character to the LCD
-void writeChar(int config) {
+void writeChar(char c) {
   setRS(1);
   setRW(0);
   struct timespec t, t2;
   t.tv_sec = 0;
   t.tv_nsec = 40000;
-  setPins(config);
+  setPins((int) c);
   flipE();
   nanosleep(&t, &t2);
 }
@@ -170,7 +170,7 @@ void writeChar(int config) {
 void writeString(char * str) {
   char * cur = str;
   while (*cur) {
-    writeChar((int) *cur);
+    writeChar(*cur);
     cur++;
   }
 }

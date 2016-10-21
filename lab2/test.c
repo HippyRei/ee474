@@ -23,7 +23,7 @@ int main() {
       for (int j = 0; j < i; j++) {
         writeCommand(SHIFT_CURS_R);
       }
-      writeChar((int) '$');
+      writeChar('$');
       
       writeCommand(0x80 | 0x40);
       writeString("GET MONEY");

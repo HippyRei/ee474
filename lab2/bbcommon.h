@@ -73,9 +73,9 @@ void setE(int);
 
 void flipE();
 
-xvoid writeCommand(int);
+void writeCommand(int);
 
-void writeChar(int);
+void writeChar(char);
 
 void writeString(char *);
 

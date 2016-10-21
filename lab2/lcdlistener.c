@@ -8,7 +8,7 @@
 #define MAX_LINE 16 //maxsize of command or text
 
 //Pprogram that allows interfacing with the LCD.
-//Wwhile this program is running, text and commands can be written to named pipes
+//While this program is running, text and commands can be written to named pipes
 //to manipulate the LCD (command_pipe and text_pipe respectively).
 int main() {
   initializeLCD();
