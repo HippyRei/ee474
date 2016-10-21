@@ -4,15 +4,9 @@ int main() {
   initializeLCD();
 
   struct timespec t, t2;
-  int text_pipe;
-  int command_pipe;
 
   t.tv_sec = 0;
   t.tv_nsec = 200000000;
-
-  struct timespec loopt;
-  loopt.tv_sec = 1;
-  loopt.tv_nsec = 0;
   
   while(1) {
     for (int i = 0; i < 16; i++) {
