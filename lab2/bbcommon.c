@@ -166,6 +166,7 @@ void writeChar(int config) {
   nanosleep(&t, &t2);
 }
 
+// Write a string to the LCD
 void writeString(char * str) {
   char * cur = str;
   while (*cur) {
