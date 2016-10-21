@@ -1,7 +1,7 @@
 #ifndef BBCOMMON_H
 #define BBCOMMON_H
 
-// For getline() and nanosleep
+// For getline() and nanosleep()
 #define _GNU_SOURCE
 
 #include <stdio.h>

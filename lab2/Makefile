@@ -16,4 +16,4 @@ input: input.c bbcommon.c bbcommon.h
 	$(CC) $(CFLAGS) -o input bbcommon.c input.c
 
 clean:
-	rm -rf *.o jitter getmoney lcdlistener input
+	rm -rf *.o jitter getmoney lcdlistener input text_pipe command_pipe

@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
-#define MAX_LINE 16 //maxsize of command or text
+#define MAX_LINE 50 //maxsize of command or text
 
 //Pprogram that allows interfacing with the LCD.
 //While this program is running, text and commands can be written to named pipes
