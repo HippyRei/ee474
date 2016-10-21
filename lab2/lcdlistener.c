@@ -10,9 +10,7 @@
 //Pprogram that allows interfacing with the LCD.
 //While this program is running, text and commands can be written to named pipes
 //to manipulate the LCD (command_pipe and text_pipe respectively).
-int main() {
-  initializeLCD();
-  
+int main() {  
   char text_buf[MAX_LINE];                  
   char com_buf[MAX_LINE];
   

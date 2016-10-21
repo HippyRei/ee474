@@ -3,6 +3,9 @@
 // Interfaces with the terminal to allow the user to write text and commands to the LCD.
 // On prompt type text in terminal window to type to LCD, use "/" for commands, and q for quit.
 int main() {
+  // Turn on the LCD if it isn't already on
+  initializeLCD();
+  
   int stop = 0;
 
   while(!stop) {
