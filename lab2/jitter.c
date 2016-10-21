@@ -1,4 +1,4 @@
-#include "jitter.h"
+#include "bbcommon.h"
 
 //Test code to flip a GPIO pin on an off in order to demonstrate jitter.
 int main() {

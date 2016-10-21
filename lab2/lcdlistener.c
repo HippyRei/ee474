@@ -69,10 +69,14 @@ int main() {
 	writeCommand(SHIFT_CURS_L);
       } else if (!strcmp(com_buf, "scr")) {    //shift cursor right
 	writeCommand(SHIFT_CURS_R);
-      } else if (!strcmp(com_buf, "bl")) {     //move to bottum line
+      } else if (!strcmp(com_buf, "bl")) {     //move to bottom line
 	writeCommand(0x80 | 0x40);
       } else if (!strcmp(com_buf, "tl")) {     //move to top line
 	writeCommand(0x80 | 0x00);
+      } else if (!strcmp(com_buf, "b")) {     //move to top line
+	writeCommand(SHIFT_CURS_L);
+	writeChar(' ');
+	writeCommand(SHIFT_CURS_L);
       }
       
       com_buf[0] = '\0';

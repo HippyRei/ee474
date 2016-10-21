@@ -13,9 +13,6 @@ int main() {
   struct timespec loopt;
   loopt.tv_sec = 1;
   loopt.tv_nsec = 0;
-
-  //text_pipe = open("text_pipe", O_WRONLY);
-
   
   while(1) {
     for (int i = 0; i < 16; i++) {
@@ -30,15 +27,4 @@ int main() {
       nanosleep(&t, &t2);
     }
   }
-  
-
-  /*
-  text_pipe = open("text_pipe", O_WRONLY);
-  write(text_pipe, "Hello\0", 6);
-  close(text_pipe);
-  
-  command_pipe = open("command_pipe", O_WRONLY);
-  write(command_pipe, "SHIFT_CURS_R\0", 13);
-  close(command_pipe);
-  */
 }

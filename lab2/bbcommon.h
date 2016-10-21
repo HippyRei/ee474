@@ -1,12 +1,7 @@
 #ifndef BBCOMMON_H
 #define BBCOMMON_H
 
-#if __STDC_VERSION__ >= 199901L
-#define _XOPEN_SOURCE 600
-#else
-#define _XOPEN_SOURCE 500
-#endif
-
+// For getline() and nanosleep
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -53,17 +48,15 @@
 
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
-// Activates the GPIO associated with gnum
 void activateGPIO(int gnum);
 
-// Writes flag to the file associated with path
-void setGPIO(char * path, char * flag);
+void setGPIO(char *, char *);
 
-void isetGPIO(char * path, int flag);
+void isetGPIO(char *, int);
 
 void initializeLCD();
 
-void setPins(int config);
+void setPins(int);
 
 void setRS(int);
 

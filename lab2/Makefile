@@ -4,7 +4,7 @@ CFLAGS=-std=c99
 
 all: jitter test lcdlistener input
 
-jitter: jitter.c jitter.h bbcommon.c bbcommon.h
+jitter: jitter.c bbcommon.c bbcommon.h
 	$(CC) $(CFLAGS) -o jitter bbcommon.c jitter.c
 
 test: test.c bbcommon.c bbcommon.h
