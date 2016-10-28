@@ -2,7 +2,7 @@ export ARCH=arm
 export CROSS_COMPILE=arm-linux-gnueabihf-
 ccflags-y := -std=gnu99
 
-obj-m += hello.o
+obj-m += lcd.o
 
 # Kernel source directory
 KDIR = /tmp/guest-engun5/bb-kernel/KERNEL
