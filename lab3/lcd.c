@@ -1,20 +1,4 @@
-/*
- * @file    hello.c
- * @author  Group10
- * @date    26 October 2016
- * @version 0.1
- * @brief   
- * 
- * 
- * 
-*/
- 
-#include <linux/init.h>             // Macros used to mark up functions e.g., __init __exit
-#include <linux/module.h>           // Core header for loading LKMs into the kernel
-#include <linux/kernel.h>           // Contains types, macros, functions for the kernel
-#include <linux/gpio.h>
-#include <linux/delay.h>            //for time delays
-#define SHIFT_DEL 100
+#include "lcd.h"
  
 MODULE_LICENSE("GPL");              ///< The license type -- this affects runtime behavior
 MODULE_AUTHOR("Group10");      ///< The author -- visible when you use modinfo
@@ -35,15 +19,6 @@ static struct gpio gpios[] = {
   { 68, GPIOF_OUT_INIT_LOW, "OE" },
   { 67, GPIOF_OUT_INIT_LOW, "SER" },
 };
-
-/*
-void clock_cycle() {
-  gpio_set_value(gpios[3].gpio, 1);
-  ndelay(SHIFT_DEL);
-  gpio_set_value(gpios[3].gpio, 0);
-  ndelay(SHIFT_DEL);
-}
-*/
 
 void setPins(int config) {
   int msk;
@@ -99,61 +74,101 @@ void writeCommand(int config) {
  *  time and that it can be discarded and its memory freed up after that point.
  *  @return returns 0 if successful
  */
-static int __init helloBBB_init(void){
-   printk(KERN_INFO "EBB: Hello %s from the BBB LKM!\n", name);
-
-   gpio_request_array(gpios, 8);
-
-   // Wait 15 ms after power is turned on
-   msleep(15);
-
-   // Write first function set command
-   setPins(0x30);
-   
-   flipE();
-
-   msleep(5);
-
-   // Write second function set command
-   flipE();
-
-   udelay(100);
+static int __init lcd_init(void){
+  int ret;
+  printk(KERN_INFO "EBB: Initializing LCD\n");
   
-   // Write third function set command
-   flipE();
+  if (alloc_chrdev_region(&dev_num, 0, 1, name) < 0) {
+    printk(KERN_ALERT "new_char: Failed to allocate a major number\n");
+    return 0;
+  }
+  printk(KERN_INFO "mknod /dev/lcd c %d %d\n", MAJOR(dev_num), MINOR(dev_num));
 
-   msleep(5);
+  mcdev = cdev_alloc();
+  mcdev->ops = &fops;
+  mcdev->owner = THIS_MODULE;
 
-   // Set to 2 lines, 5x10 font
-   writeCommand(0x38);
+  ret = cdev_add(mcdev, dev_num, 1);
+  if (ret < 0) {
+    printk(KERN_ALERT "new_char: unable to add cdev to kernerl\n");
+    return ret;
+  }
 
-   // Display off
-   writeCommand(0x8);
+  // Initialize SEMAPHORE
+  sema_init(&virtual_device.sem, 1);
 
-   // Clear display
-   writeCommand(0x1);
+  gpio_request_array(gpios, 8);
 
-   // Entry Mode Set
-   writeCommand(0x6);
+  // Wait 15 ms after power is turned on
+  msleep(15);
 
-   // Display on
-   writeCommand(0xF);
+  // Write first function set command
+  setPins(0x30);
    
-   return 0;
+  flipE();
+
+  msleep(5);
+
+  // Write second function set command
+  flipE();
+
+  udelay(100);
+  
+  // Write third function set command
+  flipE();
+
+  msleep(5);
+
+  // Set to 2 lines, 5x10 font
+  writeCommand(0x38);
+
+  // Display off
+  writeCommand(0x8);
+
+  // Clear display
+  writeCommand(0x1);
+
+  // Entry Mode Set
+  writeCommand(0x6);
+
+  // Display on
+  writeCommand(0xF);
+   
+  return 0;
 }
- 
-/** @brief The LKM cleanup function
- *  Similar to the initialization function, it is static. The __exit macro notifies that if this
- *  code is used for a built-in driver (not a LKM) that this function is not required.
- */
-static void __exit helloBBB_exit(void){
-   printk(KERN_INFO "EBB: Goodbye %s from the BBB LKM!\n", name);
-   gpio_free_array(gpios, 8);
+
+static void __exit lcd_exit(void){
+  printk(KERN_INFO "EBB: Exiting lcd\n");
+  cdev_del(mcdev);
+  unregister_chrdev_region(dev_num, 1);
+  gpio_free_array(gpios, 8);
 }
- 
-/** @brief A module must use the module_init() module_exit() macros from linux/init.h, which
- *  identify the initialization function at insertion time and the cleanup function (as
- *  listed above)
- */
-module_init(helloBBB_init);
-module_exit(helloBBB_exit);
+
+int lcd_open(struct inode *inode, struct file* filp) {
+  if (down_interruptible(&virtual_device.sem) != 0) {
+    printk(KERN_ALERT "new_char: could not lock device during open\n");
+    return -1;
+  }
+  printk(KERN_INFO "new_char: device opened\n");
+  return 0;
+}
+
+int lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
+  int res;
+  printk(KERN_INFO "new_char: writing to device...\n");
+  res = copy_from_user(virtual_device.data, bufSource, bufCount);
+
+  printk(KERN_INFO "%s\n", virtual_device.data);
+  printk(KERN_INFO "Got here.\n");
+  
+  return res;
+}
+
+int lcd_close(struct inode* inode, struct  file *filp) {
+  up(&virtual_device.sem);
+  printk(KERN_INFO "new_char, closing device\n");
+  return 0;	
+}
+
+module_init(lcd_init);
+module_exit(lcd_exit);
