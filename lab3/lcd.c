@@ -14,6 +14,7 @@
 #include <linux/kernel.h>           // Contains types, macros, functions for the kernel
 #include <linux/gpio.h>
 #include <linux/delay.h>            //for time delays
+#define SHIFT_DEL 100
  
 MODULE_LICENSE("GPL");              ///< The license type -- this affects runtime behavior
 MODULE_AUTHOR("Group10");      ///< The author -- visible when you use modinfo
@@ -28,24 +29,46 @@ static struct gpio gpios[] = {
   { 115, GPIOF_OUT_INIT_LOW, "E" },
   { 49, GPIOF_OUT_INIT_LOW, "RS" },
   { 112, GPIOF_OUT_INIT_LOW, "R/W" },
-  { 26, GPIOF_OUT_INIT_LOW, "DB7" },
-  { 44, GPIOF_OUT_INIT_LOW, "DB6" },
-  { 68, GPIOF_OUT_INIT_LOW, "DB5" },
-  { 67, GPIOF_OUT_INIT_LOW, "DB4" },
-  { 47, GPIOF_OUT_INIT_LOW, "DB3" },
-  { 45, GPIOF_OUT_INIT_LOW, "DB2" },
-  { 69, GPIOF_OUT_INIT_LOW, "DB1" },
-  { 66, GPIOF_OUT_INIT_LOW, "DB0" }
+  { 26, GPIOF_OUT_INIT_LOW, "SRCLK" },
+  { 66, GPIOF_OUT_INIT_LOW, "SRCLR" },
+  { 44, GPIOF_OUT_INIT_LOW, "RCLK" },
+  { 68, GPIOF_OUT_INIT_LOW, "OE" },
+  { 67, GPIOF_OUT_INIT_LOW, "SER" },
 };
 
-
+/*
+void clock_cycle() {
+  gpio_set_value(gpios[3].gpio, 1);
+  ndelay(SHIFT_DEL);
+  gpio_set_value(gpios[3].gpio, 0);
+  ndelay(SHIFT_DEL);
+}
+*/
 
 void setPins(int config) {
+  int msk;
+  gpio_set_value(gpios[4].gpio, 0);
+  ndelay(SHIFT_DEL);
+  gpio_set_value(gpios[4].gpio, 1);
+
+  gpio_set_value(gpios[3].gpio, 0);
+  gpio_set_value(gpios[5].gpio, 0);
+  gpio_set_value(gpios[6].gpio, 1);
+  
+  msk = 0x80;
   for (int i = 0; i < 8; i++) {
-    unsigned cur = gpios[10 - i].gpio;
-    gpio_set_value(cur, config % 2);
-    config /= 2;
+    gpio_set_value(gpios[7].gpio, !(!(config & msk)));
+    gpio_set_value(gpios[3].gpio, 1);
+    ndelay(SHIFT_DEL);
+    gpio_set_value(gpios[3].gpio, 0);
+    config *= 2;
   }
+  ndelay(SHIFT_DEL);
+  gpio_set_value(gpios[5].gpio, 1);
+  ndelay(SHIFT_DEL);
+  gpio_set_value(gpios[5].gpio, 0);
+
+  gpio_set_value(gpios[6].gpio, 0);
 }
 
 void flipE(void) {
@@ -79,14 +102,14 @@ void writeCommand(int config) {
 static int __init helloBBB_init(void){
    printk(KERN_INFO "EBB: Hello %s from the BBB LKM!\n", name);
 
-   gpio_request_array(gpios, 11);
+   gpio_request_array(gpios, 8);
 
    // Wait 15 ms after power is turned on
    msleep(15);
 
    // Write first function set command
    setPins(0x30);
-
+   
    flipE();
 
    msleep(5);
@@ -115,7 +138,7 @@ static int __init helloBBB_init(void){
 
    // Display on
    writeCommand(0xF);
-
+   
    return 0;
 }
  
@@ -125,7 +148,7 @@ static int __init helloBBB_init(void){
  */
 static void __exit helloBBB_exit(void){
    printk(KERN_INFO "EBB: Goodbye %s from the BBB LKM!\n", name);
-   gpio_free_array(gpios, 11);
+   gpio_free_array(gpios, 8);
 }
  
 /** @brief A module must use the module_init() module_exit() macros from linux/init.h, which
