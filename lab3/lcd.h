@@ -13,6 +13,14 @@
 #include <asm/uaccess.h>
 
 #define SHIFT_DEL 100
+
+#define SHIFT_DISP_L 0x18
+#define SHIFT_DISP_R 0x1C
+#define SHIFT_CURS_L 0x10
+#define SHIFT_CURS_R 0x14
+
+#define CLEAR_DISP 0x1
+
 static dev_t dev_num;
 
 struct fake_device {

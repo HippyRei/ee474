@@ -5,7 +5,7 @@ MODULE_AUTHOR("Group10");      ///< The author -- visible when you use modinfo
 MODULE_DESCRIPTION("Simple LCD Driver.");  ///< The description -- see modinfo
 MODULE_VERSION("10x");              ///< The version of the module
  
-static char *name = "world";        ///< An example LKM argument -- default value is "world"
+static char *name = "lcd";        ///< An example LKM argument -- default value is "world"
 module_param(name, charp, S_IRUGO); ///< Param desc. charp = char ptr, S_IRUGO can be read/not changed
 MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");  ///< parameter description
 
@@ -55,8 +55,8 @@ void flipE(void) {
 
 // Write a command to the GPIO instruction register
 void writeCommand(int config) {
-  unsigned rw = gpios[1].gpio;
-  unsigned rs = gpios[2].gpio;
+  unsigned rs = gpios[1].gpio;
+  unsigned rw = gpios[2].gpio;
 
   gpio_set_value(rw, 0);
   gpio_set_value(rs, 0);
@@ -65,7 +65,30 @@ void writeCommand(int config) {
   flipE();
 
   udelay(750);
-  //msleep(1);
+}
+
+// Write a character to the LCD
+void writeChar(char c) {
+  unsigned rs = gpios[1].gpio;
+  unsigned rw = gpios[2].gpio;
+
+  gpio_set_value(rw, 0);
+  gpio_set_value(rs, 1);
+  
+  
+  setPins((int) c);
+  flipE();
+  
+  udelay(750);
+}
+
+// Write a string to the LCD
+void writeString(char * str) {
+  char * cur = str;
+  while (*cur) {
+    writeChar(*cur);
+    cur++;
+  }
 }
  
 /** @brief The LKM initialization function
@@ -153,15 +176,39 @@ int lcd_open(struct inode *inode, struct file* filp) {
   return 0;
 }
 
-int lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
-  int res;
+ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
+  ssize_t res;
+  printk(KERN_INFO "%s\n", virtual_device.data);
   printk(KERN_INFO "new_char: writing to device...\n");
   res = copy_from_user(virtual_device.data, bufSource, bufCount);
+  virtual_device.data[bufCount] = '\0';
+  if (virtual_device.data[0] == '/') {
+    if (!strcmp(virtual_device.data, "/clear")) {         //clear
+      writeCommand(CLEAR_DISP);
+    } else if (!strcmp(virtual_device.data, "/sdl")) {    //shift display left
+      writeCommand(SHIFT_DISP_L);
+    } else if (!strcmp(virtual_device.data, "/sdr")) {    //shift display right
+      writeCommand(SHIFT_DISP_R);
+    } else if (!strcmp(virtual_device.data, "/scl")) {    //shift cursor left
+      writeCommand(SHIFT_CURS_L);
+    } else if (!strcmp(virtual_device.data, "/scr")) {    //shift cursor right
+      writeCommand(SHIFT_CURS_R);
+    } else if (!strcmp(virtual_device.data, "/bl")) {     //move to bottom line
+      writeCommand(0x80 | 0x40);
+    } else if (!strcmp(virtual_device.data, "/tl")) {     //move to top line
+      writeCommand(0x80 | 0x00);
+    } else if (!strcmp(virtual_device.data, "/b")) {     //move to top line
+      writeCommand(SHIFT_CURS_L);
+      writeChar(' ');
+      writeCommand(SHIFT_CURS_L);
+    }
+  } else {
+    writeString(virtual_device.data);
+  }
 
-  printk(KERN_INFO "%s\n", virtual_device.data);
-  printk(KERN_INFO "Got here.\n");
+  //virtual_device.data[0] = '\0';
   
-  return res;
+  return bufCount - res;
 }
 
 int lcd_close(struct inode* inode, struct  file *filp) {
