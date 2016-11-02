@@ -178,10 +178,13 @@ int lcd_open(struct inode *inode, struct file* filp) {
 
 ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
   ssize_t res;
-  printk(KERN_INFO "%s\n", virtual_device.data);
   printk(KERN_INFO "new_char: writing to device...\n");
   res = copy_from_user(virtual_device.data, bufSource, bufCount);
-  virtual_device.data[bufCount] = '\0';
+  if ((int) virtual_device.data[bufCount - 1] == 10) {
+    virtual_device.data[bufCount - 1] = '\0';
+  } else {
+    virtual_device.data[bufCount] = '\0';
+  }
   if (virtual_device.data[0] == '/') {
     if (!strcmp(virtual_device.data, "/clear")) {         //clear
       writeCommand(CLEAR_DISP);

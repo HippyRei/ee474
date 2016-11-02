@@ -39,9 +39,7 @@ int main() {
   
 
   while(1) {
-    for (int i = 0; i < 16; i++) {
-      printf("Got here\n");
-      
+    for (int i = 0; i < 16; i++) {      
       //f = fopen(PATH, "w");
       fprintf(f, "/clear");
       fflush(f);
