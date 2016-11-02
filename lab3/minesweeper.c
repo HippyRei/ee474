@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,22 +8,68 @@
 #define BOARD_ROW 2
 #define PATH "../../dev/lcd"
 
-void init_board(int board[][BOARD_COL], int num_mines);
-void display_board(int board[][BOARD_COL]);
-int select(int board[][BOARD_COL], int x, int y);
-void uncover_adj(int board[][BOARD_COL], int x, int y);
-int num_mine_neighbors(int board[][BOARD_COL], int x, int y);
+void init_board(int num_mines);
+void display_board();
+int mselect(int x, int y);
+int uncover_adj(int x, int y);
+int num_mine_neighbors(int x, int y);
+static int c_x = 0;
+static int c_y = 0;
+
+static int board[BOARD_ROW][BOARD_COL];
 
 int main() {
-  int board[BOARD_ROW][BOARD_COL];
+  int num_mines = 6;
+  init_board(num_mines);
 
-  int num_mines = 4;
-  init_board(board, num_mines);
+  int stop = 0;
 
-  display_board(board);
+  while(!stop) {
+    display_board();
+    
+    FILE *f = NULL;
+    while (f == NULL) {
+      f = fopen(PATH, "w");
+    }
+    
+    char *line = NULL;
+    size_t size;
+    printf("WASD, e to select: "); //prompt user
+  
+    int len = getline(&line, &size, stdin);
+
+    line[len - 1] = '\0';                  //null terminated string
+
+    if (line[0] == 'q' && len == 2) {     //quit
+      stop = 1;
+    } else if (line[0] == 'a') {          
+      if (c_x == 0) {
+	c_x = BOARD_COL - 1;
+	c_y = !c_y;
+      } else {
+	c_x--;
+      }
+    } else if (line[0] == 'd') {
+      if (c_x == BOARD_COL - 1) {
+	c_x = 0;
+	c_y = !c_y;
+      } else {
+	c_x++;
+      }
+    } else if (line[0] == 's' || line[0] == 'w') {
+      c_y = !c_y;
+    } else if (line[0] == 'e') {
+      printf("%d\n", stop);
+      mselect(c_x, c_y);
+    } else {
+      printf("Invalid command\n");
+    }
+
+    fclose(f);
+  }
 }
 
-void init_board(int board[][BOARD_COL], int num_mines) {
+void init_board(int num_mines) {
   int placed = 0;
   
   for (int i = 0; i < BOARD_COL; i++) {
@@ -37,41 +85,62 @@ void init_board(int board[][BOARD_COL], int num_mines) {
     int y = rand() % BOARD_ROW;
 
     if (board[y][x] == 0) {
-      board[y][x] = 1;
+      board[y][x] = -1;
       placed++;
     }
   }
+
+  for (int j = 0; j < BOARD_ROW; j++) {
+    for (int i = 0; i < BOARD_COL; i++) {
+      printf("%d ", board[j][i]);
+    }
+    printf("\n");
+  }
+  
 }
 
-int select(int board[][BOARD_COL], int x, int y) {
+int mselect(int x, int y) {
   if (board[y][x] == -1) {
     return -1;
   } else if (board[y][x] == 0) {
-    uncover_adj(board, x, y);
+    uncover_adj(x, y);
   }
+  return 0;
 }
 
-void uncover_adj(int board[][BOARD_COL], int x, int y) {
-  if (x < 0 || x > BOARD_COL - 1 || y < 0 || y > BOARD_ROW) {
-    return;
-  } else if (board[y][x] != 0) {
-    return;
+int uncover_adj(int x, int y) {
+  if (x < 0 || x >= BOARD_COL || y < 0 || y >= BOARD_ROW) {
+    return 0;
+  } else if (board[y][x] != 0 /*|| num_mine_neighbors(x, y) != 0*/) {
+    return 0;
   }
 
   board[y][x] = 1;
 
+  /*
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
-      uncover_adj(board, x + i, y + j);
+      uncover_adj(x + i, y + j);
     }
   }
+  */
+
+  uncover_adj(x, y + 1);
+  uncover_adj(x, y - 1);
+  uncover_adj(x + 1, y);
+  uncover_adj(x - 1, y);
+  
+  return 0;
 }
 
-int num_mine_neighbors(int board[][BOARD_COL], int x, int y) { 
+int num_mine_neighbors(int x, int y) { 
   int res = 0;
   
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
+      if (x + i >= BOARD_COL || x + i < 0 || y + i >= BOARD_ROW || y + i < 0) {
+	continue;
+      }
       if (board[y + j][x + i] == -1) {
 	res++;
       }
@@ -81,7 +150,7 @@ int num_mine_neighbors(int board[][BOARD_COL], int x, int y) {
   return res;
 }
 
-void display_board(int board[][BOARD_COL]) {
+void display_board() {
   FILE *f = NULL;
 
   while (f == NULL) {
@@ -90,11 +159,19 @@ void display_board(int board[][BOARD_COL]) {
 
   fprintf(f, "/clear");
   fflush(f);
+
+  struct timespec t, t2;
+  
+  t.tv_sec = 0;
+  t.tv_nsec = 5000000;
+
+  nanosleep(&t, &t2);
   
   for (int j = 0; j < BOARD_ROW; j++) {
     for (int i = 0; i < BOARD_COL; i++) {
       if (board[j][i] == 1) {
-	int n_mines = num_mine_neighbors(board, i, j);
+	
+	int n_mines = num_mine_neighbors(i, j);
 
 	if (n_mines == 0) {
 	  fprintf(f, " ");
@@ -104,12 +181,27 @@ void display_board(int board[][BOARD_COL]) {
 	  fflush(f);
 	}
       } else {
-	fprintf(f, "%c" , (char) 0x11111111);
+	fprintf(f, "%c", (char) 0xDB);
 	fflush(f);
       }
+      /*
+      fprintf(f, "%d", board[j][i] + 1);
+      fflush(f);
+      nanosleep(&t, &t2);
+      */
     }
 
     fprintf(f, "/bl");
+    fflush(f);
+  }
+
+  if (!c_y) {
+    fprintf(f, "/tl");
+    fflush(f);
+  }
+
+  for (int i = 0; i < c_x; i++) {
+    fprintf(f, "/scr");
     fflush(f);
   }
 
