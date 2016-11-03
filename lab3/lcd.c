@@ -215,7 +215,7 @@ ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, lof
     writeString(virtual_device.data);
   }
 
-  return bufCount - res;
+  return bufCount - res;                                  //number of characters written
 }
 
 // Close the LCD device
