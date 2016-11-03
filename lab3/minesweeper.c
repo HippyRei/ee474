@@ -6,11 +6,34 @@ static int c_y = 0;
 static int board[BOARD_ROW][BOARD_COL];
 
 int main() {
-  int num_mines = 4;
-  init_board(num_mines);
+  char buf[10];
+  char *p;
+  int num_mines;
 
   int stop = 0;
+
+  while (!stop) {
+    printf("How many mines would you like to play with? ");
+
+    if (fgets(buf, sizeof(buf), stdin) != NULL)
+      {
+	num_mines = strtol(buf, &p, 10);
+
+	if (!(buf[0] != '\n' && (*p == '\n' || *p == '\0'))) {
+	  printf ("Invalid number entered\n");
+	} else if (num_mines < 1 || num_mines > BOARD_COL * BOARD_ROW - 1) {
+	  printf ("Choose a number between 1 and %d\n", BOARD_COL * BOARD_ROW - 1); 
+	} else {
+	  stop = 1;
+	}
+      }
+  }
+  
+  init_board(num_mines);
+
   int status = 0;
+
+  stop = 0;
 
   while(!stop) {
     display_board(status);
@@ -36,20 +59,18 @@ int main() {
     } else if (line[0] == 'a') {          
       if (c_x == 0) {
 	c_x = BOARD_COL - 1;
-	c_y = !c_y;
       } else {
 	c_x--;
       }
-    } else if (line[0] == 'd') {
+    } else if (line[0] == 'd' && len == 2) {
       if (c_x == BOARD_COL - 1) {
 	c_x = 0;
-	c_y = !c_y;
       } else {
 	c_x++;
       }
-    } else if (line[0] == 's' || line[0] == 'w') {
+    } else if ((line[0] == 's' || line[0] == 'w') && len == 2) {
       c_y = !c_y;
-    } else if (line[0] == 'e') {
+    } else if (line[0] == 'e' && len == 2) {
       if (mselect(c_x, c_y) == -1) {
 	status = -1;
       }
