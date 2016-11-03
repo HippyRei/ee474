@@ -25,6 +25,7 @@
 static dev_t dev_num;               // device number
 
 // Device fields protected by semaphore
+// Structure obtained from new_char.c provided on the class website.
 struct fake_device {
 	char data[100];
 	struct semaphore sem;
