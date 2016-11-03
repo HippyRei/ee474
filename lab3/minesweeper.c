@@ -90,11 +90,11 @@ int main() {
     if (status == 0) {
       status = 1;
       for (int i = 0; i < BOARD_COL; i++) {
-    	 for (int j = 0; j < BOARD_ROW; j++) {
-    	    if (board[j][i] == 0) {
-    	      status = 0;
-    	    }
-    	 }
+        for (int j = 0; j < BOARD_ROW; j++) {
+    	  if (board[j][i] == 0) {
+    	    status = 0;
+    	   }
+    	}
       }
     }
 
@@ -148,39 +148,39 @@ int mselect(int x, int y) {
 
 // Recursively unconvers the selected spot and any adjacent spots that are not mines
 int uncover_adj(int x, int y) {
-    if (x < 0 || x >= BOARD_COL || y < 0 || y >= BOARD_ROW) { // call is outside the board
-        return 0;
-    } else if (board[y][x] != 0) {               // spot is already revealed
-        return 0;
-    }
-    
-    board[y][x] = 1;                             // reveal current spot
-    
-    if (num_mine_neighbors(x, y) == 0) {         // reveal adjacent neighbors
-        uncover_adj(x, y + 1);
-        uncover_adj(x, y - 1);
-        uncover_adj(x + 1, y);
-        uncover_adj(x - 1, y);
-    }
+  if (x < 0 || x >= BOARD_COL || y < 0 || y >= BOARD_ROW) { // call is outside the board
     return 0;
+  } else if (board[y][x] != 0) {               // spot is already revealed
+    return 0;
+  }
+
+  board[y][x] = 1;                             // reveal current spot
+
+  if (num_mine_neighbors(x, y) == 0) {         // reveal adjacent neighbors
+    uncover_adj(x, y + 1);
+    uncover_adj(x, y - 1);
+    uncover_adj(x + 1, y);
+    uncover_adj(x - 1, y);
+  }
+  return 0;
 }
 
 // Counts the number of mines in adjacent spots (including diagonal) to the current spot.
 // Returns the number of mines.
 int num_mine_neighbors(int x, int y) { 
-    int res = 0;       // number of mines
-    
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            if (x + i >= BOARD_COL || x + i < 0 || y + j >= BOARD_ROW || y + j < 0) {
-                continue;
-            }
-            if (board[y + j][x + i] == -1) {
-                res++;
-            }
-        }   
-    }
-    return res;
+  int res = 0;       // number of mines
+
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      if (x + i >= BOARD_COL || x + i < 0 || y + j >= BOARD_ROW || y + j < 0) {
+        continue;
+      }
+      if (board[y + j][x + i] == -1) {
+        res++;
+      }
+    }   
+  }
+  return res;
 }
 
 // Draws the current status of the board.
