@@ -192,6 +192,11 @@ int lcd_open(struct inode *inode, struct file* filp) {
 ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
   ssize_t res;
   printk(KERN_INFO "lcd_device: writing to device...\n");
+
+  if (bufCount > 100) {
+    bufCount = 100;
+  }
+  
   res = copy_from_user(virtual_device.data, bufSource, bufCount);
   if ((int) virtual_device.data[bufCount - 1] == 10) {    //input from bash, ensure string is null terminated
     virtual_device.data[bufCount - 1] = '\0';
@@ -223,6 +228,12 @@ ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, lof
   }
 
   return bufCount - res;                                  //number of characters written
+}
+
+// Called when user wants to get info from device file
+ssize_t lcd_read(struct file* filp, char* bufStoreData, size_t bufCount, loff_t* curOffset) {
+	printk(KERN_ALERT "Read is an unsupported operation for this device\n");
+	return -1;
 }
 
 // Close the LCD device

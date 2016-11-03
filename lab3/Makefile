@@ -19,4 +19,4 @@ getmoney: getmoney.c getmoney.h
 
 clean:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean
-	rm *.exe
+	rm -rf *.exe

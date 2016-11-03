@@ -37,12 +37,14 @@ static struct cdev* mcdev;
 static int  lcd_open(struct inode*, struct file*);
 static int lcd_close(struct inode*, struct file *);
 static ssize_t lcd_write(struct file*, const char*, size_t, loff_t*);
+ssize_t lcd_read(struct file* filp, char* bufStoreData, size_t bufCount, loff_t* curOffset);
 
 //Define file operations for LKM
 static struct file_operations fops = {
    .owner = THIS_MODULE,
    .write = lcd_write,
    .open = lcd_open,
+   .read = lcd_read,
    .release = lcd_close
 };
 
