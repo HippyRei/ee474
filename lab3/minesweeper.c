@@ -205,19 +205,19 @@ void display_board(int status) {
   if (status == 0) {      // game in progress
     for (int j = 0; j < BOARD_ROW; j++) {
       for (int i = 0; i < BOARD_COL; i++) {
-	    if (board[j][i] == 1) {        // revealed spot
-	      int n_mines = num_mine_neighbors(i, j);
-	      if (n_mines == 0) {          // revealed, no neighboring mines
-	        fprintf(f, " ");
-	        fflush(f);
-	      } else {
-	        fprintf(f, "%d", n_mines); // revealed, has neighboring mines
-	        fflush(f);
-	      }
-	    } else {                       // spot is a mine
-	      fprintf(f, "%c", (char) 0xDB);
-	      fflush(f);
-	    }  
+        if (board[j][i] == 1) {        // revealed spot
+          int n_mines = num_mine_neighbors(i, j);
+          if (n_mines == 0) {          // revealed, no neighboring mines
+            fprintf(f, " ");
+            fflush(f);
+          } else {
+            fprintf(f, "%d", n_mines); // revealed, has neighboring mines
+            fflush(f);
+          }
+        } else {                       // spot is a mine
+          fprintf(f, "%c", (char) 0xDB);
+          fflush(f);
+        }  
       }
       fprintf(f, "/bl");
       fflush(f);
