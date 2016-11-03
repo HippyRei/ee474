@@ -163,7 +163,7 @@ static int __init lcd_init(void){
   return 0;
 }
 
-// LCD exit function
+//LCD exit function
 static void __exit lcd_exit(void){
   printk(KERN_INFO "Exiting lcd\n");
   cdev_del(mcdev);
@@ -171,27 +171,27 @@ static void __exit lcd_exit(void){
   gpio_free_array(gpios, 8);             //release GPIOs
 }
 
-// open LCD device 
+// Open the LCD device 
 int lcd_open(struct inode *inode, struct file* filp) {
   if (down_interruptible(&virtual_device.sem) != 0) {                      //check semaphore
-    printk(KERN_ALERT "lcd_device: could not lock device during open\n");  //fail
+    printk(KERN_ALERT "lcd_device: could not lock device during open\n");  //fail to open
     return -1;
   }
-  printk(KERN_INFO "lcd_device: device opened\n");                         // success
+  printk(KERN_INFO "lcd_device: device opened\n");                         //success
   return 0;
 }
 
-// write to the LCD device
+// Write a command or text to the LCD device
 ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
   ssize_t res;
   printk(KERN_INFO "lcd_device: writing to device...\n");
   res = copy_from_user(virtual_device.data, bufSource, bufCount);
-  if ((int) virtual_device.data[bufCount - 1] == 10) {
+  if ((int) virtual_device.data[bufCount - 1] == 10) {    //input from bash, ensure string is null terminated
     virtual_device.data[bufCount - 1] = '\0';
-  } else {
+  } else {                                                //ensure string is null terminated
     virtual_device.data[bufCount] = '\0';
   }
-  if (virtual_device.data[0] == '/') {
+  if (virtual_device.data[0] == '/') {                    //write command to LCD
     if (!strcmp(virtual_device.data, "/clear")) {         //clear
       writeCommand(CLEAR_DISP);
     } else if (!strcmp(virtual_device.data, "/sdl")) {    //shift display left
@@ -206,23 +206,22 @@ ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, lof
       writeCommand(0x80 | 0x40);
     } else if (!strcmp(virtual_device.data, "/tl")) {     //move to top line
       writeCommand(0x80 | 0x00);
-    } else if (!strcmp(virtual_device.data, "/b")) {     //move to top line
+    } else if (!strcmp(virtual_device.data, "/b")) {      //backspace
       writeCommand(SHIFT_CURS_L);
       writeChar(' ');
       writeCommand(SHIFT_CURS_L);
     }
-  } else {
+  } else {                                                //write string to LCD
     writeString(virtual_device.data);
   }
 
-  //virtual_device.data[0] = '\0';
-  
   return bufCount - res;
 }
 
+// Close the LCD device
 int lcd_close(struct inode* inode, struct  file *filp) {
-  up(&virtual_device.sem);
-  printk(KERN_INFO "new_char, closing device\n");
+  up(&virtual_device.sem);                                //release semaphore
+  printk(KERN_INFO "lcd_device: closing device\n");
   return 0;	
 }
 
