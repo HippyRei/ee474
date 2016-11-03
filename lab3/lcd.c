@@ -1,4 +1,11 @@
 #include "lcd.h"
+
+// LKM that acts as a simple driver for the LCD by interacting through GPIO pins
+// and a shift register. Text and commands can be written to the LCD by writing 
+// to the dev file /dev/lcd
+
+// initialize, exit, open, close and write code modeled/obtained from new_char.c provided on the class website.
+// structure of a kernel module modeled from Derek Molloy: http://derekmolloy.ie/writing-a-linux-kernel-module-part-1-introduction/
  
 MODULE_LICENSE("GPL");                     // General Public License
 MODULE_AUTHOR("Group10");                  // us, group10 - self explanatory
