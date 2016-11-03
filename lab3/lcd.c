@@ -1,23 +1,24 @@
 #include "lcd.h"
  
-MODULE_LICENSE("GPL");              ///< The license type -- this affects runtime behavior
-MODULE_AUTHOR("Group10");      ///< The author -- visible when you use modinfo
-MODULE_DESCRIPTION("Simple LCD Driver.");  ///< The description -- see modinfo
-MODULE_VERSION("10x");              ///< The version of the module
+MODULE_LICENSE("GPL");                     // General Public License
+MODULE_AUTHOR("Group10");                  // us, group10 - self explanatory
+MODULE_DESCRIPTION("Simple LCD Driver.");  // description
+MODULE_VERSION("10x");                     // module version
  
-static char *name = "lcd";        ///< An example LKM argument -- default value is "world"
-module_param(name, charp, S_IRUGO); ///< Param desc. charp = char ptr, S_IRUGO can be read/not changed
-MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");  ///< parameter description
+static char *name = "lcd";                 // name of the LKM in the system when it is registered
+module_param(name, charp, S_IRUGO); 
+MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log"); 
 
+// GPIO pins 
 static struct gpio gpios[] = {
-  { 115, GPIOF_OUT_INIT_LOW, "E" },
-  { 49, GPIOF_OUT_INIT_LOW, "RS" },
-  { 112, GPIOF_OUT_INIT_LOW, "R/W" },
-  { 26, GPIOF_OUT_INIT_LOW, "SRCLK" },
-  { 66, GPIOF_OUT_INIT_LOW, "SRCLR" },
-  { 44, GPIOF_OUT_INIT_LOW, "RCLK" },
-  { 68, GPIOF_OUT_INIT_LOW, "OE" },
-  { 67, GPIOF_OUT_INIT_LOW, "SER" },
+  { 115, GPIOF_OUT_INIT_LOW, "E" },      // enable 
+  { 49, GPIOF_OUT_INIT_LOW, "RS" },      // register select
+  { 112, GPIOF_OUT_INIT_LOW, "R/W" },    // read/write
+  { 26, GPIOF_OUT_INIT_LOW, "SRCLK" },   // shift register clock
+  { 66, GPIOF_OUT_INIT_LOW, "SRCLR" },   // shift register clear
+  { 44, GPIOF_OUT_INIT_LOW, "RCLK" },    // register clock
+  { 68, GPIOF_OUT_INIT_LOW, "OE" },      // output enable
+  { 67, GPIOF_OUT_INIT_LOW, "SER" },     // data
 };
 
 // Set pins of the LCD (through the shift register) to passed value.
@@ -93,12 +94,8 @@ void writeString(char * str) {
   }
 }
  
-/** @brief The LKM initialization function
- *  The static keyword restricts the visibility of the function to within this C file. The __init
- *  macro means that for a built-in driver (not a LKM) the function is only used at initialization
- *  time and that it can be discarded and its memory freed up after that point.
- *  @return returns 0 if successful
- */
+// LCD LKM initialization function
+// initialization code modeled from new_char.c provided on the class website.
 static int __init lcd_init(void){
   int ret;
   printk(KERN_INFO "Initializing LCD\n");
@@ -163,7 +160,8 @@ static int __init lcd_init(void){
   return 0;
 }
 
-//LCD exit function
+// LCD exit function
+// exit code modeled from new_char.c provided on the class website.
 static void __exit lcd_exit(void){
   printk(KERN_INFO "Exiting lcd\n");
   cdev_del(mcdev);
@@ -172,6 +170,7 @@ static void __exit lcd_exit(void){
 }
 
 // Open the LCD device 
+// open code modeled from new_char.c provided on the class website.
 int lcd_open(struct inode *inode, struct file* filp) {
   if (down_interruptible(&virtual_device.sem) != 0) {                      //check semaphore
     printk(KERN_ALERT "lcd_device: could not lock device during open\n");  //fail to open
@@ -182,6 +181,7 @@ int lcd_open(struct inode *inode, struct file* filp) {
 }
 
 // Write a command or text to the LCD device
+// open code modeled from new_char.c provided on the class website.
 ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
   ssize_t res;
   printk(KERN_INFO "lcd_device: writing to device...\n");
@@ -219,6 +219,7 @@ ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, lof
 }
 
 // Close the LCD device
+// close code modeled from new_char.c provided on the class website.
 int lcd_close(struct inode* inode, struct  file *filp) {
   up(&virtual_device.sem);                                //release semaphore
   printk(KERN_INFO "lcd_device: closing device\n");
