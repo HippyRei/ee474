@@ -15,25 +15,25 @@ static struct gpio gpios[] = {
   { 49, GPIOF_OUT_INIT_LOW, "RS" },      // register select
   { 112, GPIOF_OUT_INIT_LOW, "R/W" },    // read/write
   { 26, GPIOF_OUT_INIT_LOW, "SRCLK" },   // shift register clock
-  { 66, GPIOF_OUT_INIT_LOW, "SRCLR" },   // shift register clear
+  { 66, GPIOF_OUT_INIT_LOW, "SRCLR" },   // !shift register clear
   { 44, GPIOF_OUT_INIT_LOW, "RCLK" },    // register clock
-  { 68, GPIOF_OUT_INIT_LOW, "OE" },      // output enable
+  { 68, GPIOF_OUT_INIT_LOW, "OE" },      // !output enable
   { 67, GPIOF_OUT_INIT_LOW, "SER" },     // data
 };
 
 // Set pins of the LCD (through the shift register) to passed value.
 void setPins(int config) {
   int msk;
-  gpio_set_value(gpios[4].gpio, 0);
+  gpio_set_value(gpios[4].gpio, 0);      //clear shift register.
   ndelay(SHIFT_DEL);
-  gpio_set_value(gpios[4].gpio, 1);
+  gpio_set_value(gpios[4].gpio, 1);      //disable clear shift registers.
 
-  gpio_set_value(gpios[3].gpio, 0);
-  gpio_set_value(gpios[5].gpio, 0);
-  gpio_set_value(gpios[6].gpio, 1);
+  gpio_set_value(gpios[3].gpio, 0);      //set clock to 0
+  gpio_set_value(gpios[5].gpio, 0);      //set clock to 0
+  gpio_set_value(gpios[6].gpio, 1);      //disable output
   
   msk = 0x80;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 8; i++) {          //set pins on register
     gpio_set_value(gpios[7].gpio, !(!(config & msk)));
     gpio_set_value(gpios[3].gpio, 1);
     ndelay(SHIFT_DEL);
@@ -41,11 +41,11 @@ void setPins(int config) {
     config *= 2;
   }
   ndelay(SHIFT_DEL);
-  gpio_set_value(gpios[5].gpio, 1);
+  gpio_set_value(gpios[5].gpio, 1);      
   ndelay(SHIFT_DEL);
   gpio_set_value(gpios[5].gpio, 0);
 
-  gpio_set_value(gpios[6].gpio, 0);
+  gpio_set_value(gpios[6].gpio, 0);      //enable output
 }
 
 // Flip the enable pin on the LCD
