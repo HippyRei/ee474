@@ -191,7 +191,7 @@ void display_board(int status) {
     f = fopen(PATH, "w");
   }
 
-  fprintf(f, "/clear");
+  fprintf(f, "/clear");    //clear display
   fflush(f);
 
   struct timespec t, t2;
@@ -201,49 +201,41 @@ void display_board(int status) {
 
   nanosleep(&t, &t2);
 
-  if (status == 0) {
+  // draw the board
+  if (status == 0) {      // game in progress
     for (int j = 0; j < BOARD_ROW; j++) {
       for (int i = 0; i < BOARD_COL; i++) {
-	if (board[j][i] == 1) {
-	
-	  int n_mines = num_mine_neighbors(i, j);
-
-	  if (n_mines == 0) {
-	    fprintf(f, " ");
-	    fflush(f);
-	  } else {
-	    fprintf(f, "%d", n_mines);
-	    fflush(f);
-	  }
-	} else {
-	  fprintf(f, "%c", (char) 0xDB);
-	  fflush(f);
-	}
-	/*
-	  fprintf(f, "%d", board[j][i] + 1);
-	  fflush(f);
-	  nanosleep(&t, &t2);
-	*/
+	    if (board[j][i] == 1) {        // revealed spot
+	      int n_mines = num_mine_neighbors(i, j);
+	      if (n_mines == 0) {          // revealed, no neighboring mines
+	        fprintf(f, " ");
+	        fflush(f);
+	      } else {
+	        fprintf(f, "%d", n_mines); // revealed, has neighboring mines
+	        fflush(f);
+	      }
+	    } else {                       // spot is a mine
+	      fprintf(f, "%c", (char) 0xDB);
+	      fflush(f);
+	    }  
       }
-
       fprintf(f, "/bl");
       fflush(f);
     }
-
+    // move cursor back to last position
     if (!c_y) {
       fprintf(f, "/tl");
       fflush(f);
     }
-
     for (int i = 0; i < c_x; i++) {
       fprintf(f, "/scr");
       fflush(f);
     }
-  } else if (status == -1) {
+  } else if (status == -1) {          // lose game
     fprintf(f, "YOU SUCK");
     fflush(f);
   } else {
-    fprintf(f, "YOU WIN!!!!!!");
+    fprintf(f, "YOU WIN!!!!!!");      // win game
     fflush(f);
   }
 
