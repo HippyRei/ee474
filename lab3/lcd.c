@@ -20,6 +20,7 @@ static struct gpio gpios[] = {
   { 67, GPIOF_OUT_INIT_LOW, "SER" },
 };
 
+// Set pins of the LCD (through the shift register) to passed value.
 void setPins(int config) {
   int msk;
   gpio_set_value(gpios[4].gpio, 0);
@@ -46,6 +47,7 @@ void setPins(int config) {
   gpio_set_value(gpios[6].gpio, 0);
 }
 
+// Flip the enable pin on the LCD
 void flipE(void) {
   unsigned e = gpios[0].gpio;
   gpio_set_value(e, 1);
@@ -53,7 +55,7 @@ void flipE(void) {
   gpio_set_value(e, 0);
 }
 
-// Write a command to the GPIO instruction register
+// Write a command to the GPIO instruction register.
 void writeCommand(int config) {
   unsigned rs = gpios[1].gpio;
   unsigned rw = gpios[2].gpio;
@@ -67,7 +69,7 @@ void writeCommand(int config) {
   udelay(750);
 }
 
-// Write a character to the LCD
+// Write a character to the LCD.
 void writeChar(char c) {
   unsigned rs = gpios[1].gpio;
   unsigned rw = gpios[2].gpio;
@@ -99,13 +101,13 @@ void writeString(char * str) {
  */
 static int __init lcd_init(void){
   int ret;
-  printk(KERN_INFO "EBB: Initializing LCD\n");
+  printk(KERN_INFO "Initializing LCD\n");
   
   if (alloc_chrdev_region(&dev_num, 0, 1, name) < 0) {
-    printk(KERN_ALERT "new_char: Failed to allocate a major number\n");
+    printk(KERN_ALERT "lcd_device: Failed to allocate a major number\n");
     return 0;
   }
-  printk(KERN_INFO "mknod /dev/lcd c %d %d\n", MAJOR(dev_num), MINOR(dev_num));
+  printk(KERN_INFO "mknod /dev/lcd c %d %d\n", MAJOR(dev_num), MINOR(dev_num)); //print major and minor number.
 
   mcdev = cdev_alloc();
   mcdev->ops = &fops;
@@ -113,10 +115,11 @@ static int __init lcd_init(void){
 
   ret = cdev_add(mcdev, dev_num, 1);
   if (ret < 0) {
-    printk(KERN_ALERT "new_char: unable to add cdev to kernerl\n");
+    printk(KERN_ALERT "lcd_device: unable to add cdev to kernel\n");
     return ret;
   }
 
+  // Initialize the LCD with commands
   // Initialize SEMAPHORE
   sema_init(&virtual_device.sem, 1);
 
@@ -160,25 +163,28 @@ static int __init lcd_init(void){
   return 0;
 }
 
+// LCD exit function
 static void __exit lcd_exit(void){
-  printk(KERN_INFO "EBB: Exiting lcd\n");
+  printk(KERN_INFO "Exiting lcd\n");
   cdev_del(mcdev);
-  unregister_chrdev_region(dev_num, 1);
-  gpio_free_array(gpios, 8);
+  unregister_chrdev_region(dev_num, 1);  //unregister device
+  gpio_free_array(gpios, 8);             //release GPIOs
 }
 
+// open LCD device 
 int lcd_open(struct inode *inode, struct file* filp) {
-  if (down_interruptible(&virtual_device.sem) != 0) {
-    printk(KERN_ALERT "new_char: could not lock device during open\n");
+  if (down_interruptible(&virtual_device.sem) != 0) {                      //check semaphore
+    printk(KERN_ALERT "lcd_device: could not lock device during open\n");  //fail
     return -1;
   }
-  printk(KERN_INFO "new_char: device opened\n");
+  printk(KERN_INFO "lcd_device: device opened\n");                         // success
   return 0;
 }
 
+// write to the LCD device
 ssize_t lcd_write(struct file* filp, const char* bufSource, size_t bufCount, loff_t* curOffset) {
   ssize_t res;
-  printk(KERN_INFO "new_char: writing to device...\n");
+  printk(KERN_INFO "lcd_device: writing to device...\n");
   res = copy_from_user(virtual_device.data, bufSource, bufCount);
   if ((int) virtual_device.data[bufCount - 1] == 10) {
     virtual_device.data[bufCount - 1] = '\0';
