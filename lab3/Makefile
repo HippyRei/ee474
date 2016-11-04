@@ -15,7 +15,10 @@ minesweeper: minesweeper.c minesweeper.h
 	gcc -std=c99 -o minesweeper.exe minesweeper.c
 
 getmoney: getmoney.c getmoney.h
-	gcc -std=c99 -o getmoney.exe minesweeper.c
+	gcc -std=c99 -o getmoney.exe getmoney.c
+
+input: input.c input.h
+	gcc -std=c99 -o input.exe input.c
 
 clean:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean

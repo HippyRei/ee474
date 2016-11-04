@@ -39,7 +39,9 @@ int main() {
 
   int status = 0;         // status of the game lose: -1  win: 1 continuing: 0
 
-  stop = 0;               
+  stop = 0;
+
+  printf("w - up\ns - down\na - left\nd - right\ne- select\nq - quit\n");
 
   // Prompt the user for a command to continue the game.
   while(!stop) {
@@ -56,7 +58,7 @@ int main() {
     
     char *line = NULL;
     size_t size;
-    printf("WASD, e to select: ");           // prompt user for command
+    printf("Type h for commands: ");           // prompt user for command
   
     int len = getline(&line, &size, stdin);  // get command from user
 
@@ -64,7 +66,9 @@ int main() {
 
     if (line[0] == 'q' && len == 2) {        // quit
       stop = 1;
-    } else if (line[0] == 'a') {             // left shift
+    } else if (line[0] == 'h' && len == 2) {
+      printf("w - up\ns - down\na - left\nd - right\ne- select\nq - quit\n");
+    }else if (line[0] == 'a' && len == 2) {             // left shift
       if (c_x == 0) {             // edge case
 	    c_x = BOARD_COL - 1;
       } else {
@@ -232,7 +236,7 @@ void display_board(int status) {
       fflush(f);
     }
   } else if (status == -1) {          // lose game
-    fprintf(f, "YOU SUCK");
+    fprintf(f, "YOU SUCK!!!!!");
     fflush(f);
   } else {
     fprintf(f, "YOU WIN!!!!!!");      // win game
