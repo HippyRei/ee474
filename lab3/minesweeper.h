@@ -1,3 +1,6 @@
+#ifndef _MINESWEEPER_H_
+#define _MINESWEEPER_H_
+
 #define _GNU_SOURCE
 
 #include <time.h>
@@ -13,3 +16,5 @@ void display_board(int);
 int mselect(int x, int y);
 int uncover_adj(int x, int y);
 int num_mine_neighbors(int x, int y);
+
+#endif

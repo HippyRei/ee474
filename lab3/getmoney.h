@@ -1,3 +1,6 @@
+#ifndef _GETMONEY_LAB3_H_
+#define _GETMONEY_LAB3_H_
+
 // For getline() and nanosleep()
 #define _GNU_SOURCE
 
@@ -9,3 +12,5 @@
 #include <fcntl.h>
 
 #define PATH "../../dev/lcd"
+
+#endif
