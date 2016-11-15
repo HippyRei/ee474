@@ -9,7 +9,7 @@ struct itimerspec itimer;
 
 timer_t timerid;
 
-long tot;
+int tot;
 int s;
 
 //int pid;
@@ -30,7 +30,16 @@ void timer_handler(int whatever)
   printf("Signal sent\n");
   */
 
-  
+  tot += read_acd(AIN1);
+  s++;
+
+  if (s == FREQUENCY - 1) {
+    if (tot / s >= 1000) {
+      printf("You're too close!\n");
+    }
+    tot = 0;
+    s = 0;
+  }
 }
 
 void enable_acd() {
@@ -64,6 +73,9 @@ int read_acd(char *path) {
 }
 
 int main() {
+  tot = 0;
+  s = 0;
+  
   enable_acd();
   
   memset(&sa, 0, sizeof(sa));
