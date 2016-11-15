@@ -9,7 +9,7 @@ struct itimerspec itimer;
 
 timer_t timerid;
 
-int pid;
+//int pid;
 
 //timer interrupt handler
 void timer_handler(int whatever)
@@ -19,14 +19,50 @@ void timer_handler(int whatever)
     and in this case, it means to send signal "SIG_USER" to the
     process with "pid"
   */
+  /*
   if(kill(pid, SIG_USER) != 0) { 
     printf("Can't send msg\n");
     exit(0);
   }
   printf("Signal sent\n");
+  */
+
+  printf("got here\n");
+}
+
+void enable_acd() {
+   // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(ACD_SLOTS_PATH, "w");
+  }
+
+  // Enable acd ports so we can read from them
+  fprintf(f, "cape-bone-iio");
+  fclose(f);
+}
+
+int read_acd(char *path) {
+  // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(path, "r");
+  }
+
+  // Buffer to store contents of ACD pin
+  char buf[101];
+  
+  int b_len = fread(buf, 1, 100, f);
+  buf[100] = 0;
+  
+  fclose(f);
+
+  return atoi(buf);
 }
 
 int main() {
+  enable_acd();
+  
   memset(&sa, 0, sizeof(sa));
   
   sa.sa_handler = &timer_handler;
@@ -41,12 +77,9 @@ int main() {
   
   itimer.it_interval = ts;
   itimer.it_value = ts;
-  timer_settime(timerid, 0, &itimer, NULL);
+  timer_settime(timerid, 0, &itimer, NULL);  
     
-  
-    
-  while(1) {
-    
-  }
+  while(1);
 
+  return 0;
 }
