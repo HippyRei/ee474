@@ -2,10 +2,10 @@ CC=gcc
 CFLAGS=-std=c11
 
 
-all: tank
+all: acd_listener
 
-tank: tank.c tank.h
-	$(CC) $(CFLAGS) -o tank.exe tank.c -lrt
+acd_listener: acd_listener.c acd_listener.h
+	$(CC) $(CFLAGS) -o acd_listener.exe acd_listener.c -lrt
 
 clean:
 	rm -rf *.o *.exe

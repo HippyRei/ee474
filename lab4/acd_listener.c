@@ -1,4 +1,4 @@
-#include "tank.h"
+#include "acd_listener.h"
 
 struct sigaction sa;
 struct sigevent se;
@@ -8,6 +8,9 @@ struct timespec ts;
 struct itimerspec itimer;
 
 timer_t timerid;
+
+long tot;
+int s;
 
 //int pid;
 
@@ -27,7 +30,7 @@ void timer_handler(int whatever)
   printf("Signal sent\n");
   */
 
-  printf("got here\n");
+  
 }
 
 void enable_acd() {
