@@ -15,8 +15,7 @@ int s;
 //int pid;
 
 //timer interrupt handler
-void timer_handler(int whatever)
-{
+void timer_handler(int signum) {
   /*send user defined signal (SIG_USER) to the process with PID
     kill() doesn't neccessarily mean to terminate another process,
     and in this case, it means to send signal "SIG_USER" to the
