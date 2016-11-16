@@ -27,15 +27,16 @@
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
 #define NUM_DB 5
+#define NUM_PWM 2
 
 //PWMs
 #define A_PPATH "../../sys/devices/ocp.3/pwm_test_P9_14.15/period"
 #define A_DPATH "../../sys/devices/ocp.3/pwm_test_P9_14.15/duty"
 #define A_RPATH "../../sys/devices/ocp.3/pwm_test_P9_14.15/run"
 
-#define B_PPATH "../../sys/devices/ocp.3/pwm_test_P9_16.15/period"
-#define B_DPATH "../../sys/devices/ocp.3/pwm_test_P9_16.15/duty"
-#define B_RPATH "../../sys/devices/ocp.3/pwm_test_P9_16.15/run"
+#define B_PPATH "../../sys/devices/ocp.3/pwm_test_P9_16.16/period"
+#define B_DPATH "../../sys/devices/ocp.3/pwm_test_P9_16.16/duty"
+#define B_RPATH "../../sys/devices/ocp.3/pwm_test_P9_16.16/run"
 
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"

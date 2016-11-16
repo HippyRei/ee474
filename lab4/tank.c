@@ -7,6 +7,11 @@ int DB_GPIOS[] = {27, 47, 46, 65, 60};
 char * DB_VALS[] = {AIN1_VAL, AIN2_VAL, BIN1_VAL, BIN2_VAL, STBY_VAL};
 char * DB_DIRS[] = {AIN1_DIR, AIN2_DIR, BIN1_DIR, BIN2_DIR, STBY_DIR};
 
+char *PPATHS[] = {A_PPATH, B_PPATH};
+char *DPATHS[] = {A_DPATH, B_DPATH};
+char *RPATHS[] = {A_RPATH, B_RPATH};
+char *SLOTS[] = {A_SLOT, B_SLOT};
+
 
 // Activate the GPIO corresponding to gnum
 void activateGPIO(int gnum) {
@@ -80,8 +85,13 @@ void activatePWM(char * pwm) {
 
 //signal handler for tank motors to turn
 void sighandler(int signum) {
-  //do something
-  //back up and turn
+  int cur = 100000;
+  for (int i = 0; i < 10; i++) {
+    isetPin(DPATHS[0], cur + (i + 1) * 40000);
+    isetPin(DPATHS[1], cur + (i + 1) * 40000);
+
+    sleep(1);
+  }
 }
 
 
@@ -89,19 +99,40 @@ void sighandler(int signum) {
 int main() {
 
   //activate GPIOs
-  for(int i = 0; i < 5; i++) {
+  for(int i = 0; i < NUM_DB; i++) {
     activateGPIO(DB_GPIOS[i]);
     setPin(DB_DIRS[i], "out");
   }
 
-  
+  initializePWMSlots();
+
+  for (int i = 0; i < NUM_PWM; i++) {
+    activatePWM(SLOTS[i]);
+  }
 
   sa.sa_handler = &sighandler;
   sigaction(SIGUSR1, &sa, NULL);
 
-  while(1) {
-    //drive forward
-  }
+  printf("Got here\n");
 
+  isetPin(DB_VALS[4], 0);
+
+  isetPin(RPATHS[0], 1);
+  isetPin(RPATHS[1], 1);
+
+  isetPin(DB_VALS[0], 1);
+  isetPin(DB_VALS[1], 0);
+  isetPin(DB_VALS[2], 1);
+  isetPin(DB_VALS[3], 0);
+
+  isetPin(PPATHS[0], 500000);
+  isetPin(PPATHS[1], 500000);
+
+  isetPin(DPATHS[0], 100000);
+  isetPin(DPATHS[1], 100000);
+
+  isetPin(DB_VALS[4], 1);
+
+  while(1);
 }
 
