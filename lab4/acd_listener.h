@@ -21,8 +21,11 @@
 #define FREQUENCY 10
 #define SIG_USER 20
 
+#define LEN 12
+
 void enable_acd();
 
 int read_acd(char * path);
+
 
 #endif // _TANK_H_LAB_4

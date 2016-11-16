@@ -12,7 +12,7 @@ timer_t timerid;
 int tot;
 int s;
 
-//int pid;
+pid_t pid;
 
 //timer interrupt handler
 void timer_handler(int signum) {
@@ -35,11 +35,16 @@ void timer_handler(int signum) {
   if (s == FREQUENCY - 1) {
     if (tot / s >= 1000) {
       printf("You're too close!\n");
+
+      //send signal
+      kill(pid, SIGUSR1);
+      
     }
     tot = 0;
     s = 0;
   }
 }
+
 
 void enable_acd() {
    // Attempt to open the file; loop until file is found
@@ -76,6 +81,18 @@ int main() {
   s = 0;
   
   enable_acd();
+
+  //get PID of tank process
+  //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
+  char line[LEN];
+  FILE *cmd = popen("pgrep -f tank.exe", "r");
+
+  fgets(line, LEN, cmd);
+  pid = strtoul(line, NULL, 10);
+
+  pclose(cmd);
+
+  
   
   memset(&sa, 0, sizeof(sa));
   
