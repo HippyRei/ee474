@@ -33,9 +33,10 @@ void timer_handler(int signum) {
   s++;
 
   if (s == FREQUENCY - 1) {
-    printf("%d\n", tot / s);
+    //printf("%d\n", tot / s);
     if (tot / s >= 900) {
       printf("You're too close!\n");
+      printf("%d\n", pid);
 
       //send signal
       kill(pid, SIGUSR1);

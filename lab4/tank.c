@@ -37,10 +37,7 @@ int main() {
   quit.sa_handler = &exithandler;
   sigaction(SIGINT, &quit, NULL);
 
-  sigaction(SIGHUP, &quit, NULL);
-  sigaction(SIGSTOP, &quit, NULL);
-  sigaction(SIGKILL, &quit, NULL);
-  sigaction(SIGABRT, &quit, NULL);
+  sigaction(SIGTERM, &quit, NULL);
 
   //system("./adc_listener.exe &");
 

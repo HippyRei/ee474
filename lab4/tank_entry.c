@@ -4,65 +4,87 @@
 
 struct sigaction quit;
 
+//static int tank_run = 0;
+
 int main() {
-  struct timespec t, t2;
+  pid_t pid1, pid2;
+  while (1) {
+    struct timespec t, t2;
 
-  t.tv_sec = 1;
+    t.tv_sec = 1;
   
-  activateGPIO(SWITCH_GPIO_NUM);
+    activateGPIO(SWITCH_GPIO_NUM);
 
-  setPin(SWITCH_DIR, "in");
+    setPin(SWITCH_DIR, "in");
 
-  int on = 0;
+    int on = 0;
 
-  while (!on) {
-    FILE *f = NULL;
-    while (f == NULL) {
-      f =  fopen(SWITCH_VAL, "r");
+    while (!on) {
+      FILE *f = NULL;
+      while (f == NULL) {
+	f =  fopen(SWITCH_VAL, "r");
+      }
+
+      // Buffer to store contents of GPIO
+      char buf[10];
+  
+      int b_len = fread(buf, 1, 10, f);
+      buf[9] = 0;
+  
+      fclose(f);
+
+      on = atoi(buf);
+
+      nanosleep(&t, &t2);
+    }
+    
+    /*Spawn a child to run the program.*/
+    pid1 = fork();
+    if (pid1 == 0) { /* child process */
+    
+      static char *argv[]={};
+      execv("/root/lab4/tank.exe", argv);
+      exit(127); /* only if execv fails */
+    } else {
+      pid2 = fork();
+
+      if (pid2 == 0) {
+      
+	static char *argv[]={};
+	execv("/root/lab4/adc_listener.exe", argv);
+	exit(127); /* only if execv fails */
+      }
     }
 
-    // Buffer to store contents of GPIO
-    char buf[10];
+    while (on) {
+      FILE *f = NULL;
+      while (f == NULL) {
+	f =  fopen(SWITCH_VAL, "r");
+      }
+
+      // Buffer to store contents of GPIO
+      char buf[10];
   
-    int b_len = fread(buf, 1, 10, f);
-    buf[9] = 0;
+      int b_len = fread(buf, 1, 10, f);
+      buf[9] = 0;
   
-    fclose(f);
+      fclose(f);
 
-    on = atoi(buf);
+      on = atoi(buf);
 
-    nanosleep(&t, &t2);
-  }
-    
-  /*Spawn a child to run the program.*/
-  pid_t pid=fork();
-  if (pid==0) { /* child process */
-    
-    static char *argv[]={};
-    execv("./tank.exe", argv);
-    exit(127); /* only if execv fails */
-  }
-
-  while (on) {
-    FILE *f = NULL;
-    while (f == NULL) {
-      f =  fopen(SWITCH_VAL, "r");
+      nanosleep(&t, &t2);
     }
 
-    // Buffer to store contents of GPIO
-    char buf[10];
-  
-    int b_len = fread(buf, 1, 10, f);
-    buf[9] = 0;
-  
-    fclose(f);
+    printf("%d, %d\n", pid1, pid2);
 
-    on = atoi(buf);
+    kill(pid1, SIGTERM);
+    kill(pid2, SIGKILL);
 
-    nanosleep(&t, &t2);
+    int status;
+
+    waitpid(pid1, &status, 0);
+    waitpid(pid2, &status, 0);
   }
-
-  kill(pid, SIGKILL);
   return 0;
 }
 
@@ -88,5 +110,28 @@ void activateGPIO(int gnum) {
 
   // Create configuration files for GPIO gnum
   fprintf(f, "%d", gnum);
+  fclose(f);
+}
+
+void enable_adc() {
+   // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(ACD_SLOTS_PATH, "w");
+  }
+
+  // Enable acd ports so we can read from them
+  fprintf(f, "cape-bone-iio");
+  fclose(f);
+}
+
+void initializePWMSlots() {
+  // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(PWM_SLOTS_PATH, "w");
+  }
+
+  fprintf(f, "am33xx_pwm");
   fclose(f);
 }
