@@ -33,7 +33,8 @@ void timer_handler(int signum) {
   s++;
 
   if (s == FREQUENCY - 1) {
-    if (tot / s >= 1000) {
+    printf("%d\n", tot / s);
+    if (tot / s >= 900) {
       printf("You're too close!\n");
 
       //send signal
@@ -104,7 +105,7 @@ int main() {
   timer_create(CLOCK_REALTIME, &se, &timerid);
   
   ts.tv_sec = 0;
-  ts.tv_nsec = 1000000000/FREQUENCY;
+  ts.tv_nsec = REPORT_T/FREQUENCY;
   
   itimer.it_interval = ts;
   itimer.it_value = ts;

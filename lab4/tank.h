@@ -43,8 +43,29 @@
 
 #define PWM_SLOTS_PATH "/sys/devices/bone_capemgr.9/slots"
 
+#define PERIOD 500000
+#define START_DUTY 100000
+
+struct Pwm {
+  char *period_p;
+  char *duty_p;
+  char *run_p;
+
+  char *slot;
+  int duty; 
+};
+
+struct Gpio {
+  int num;
+  
+  char *value_p;
+  char *direction_p;
+};
+
 
 void sighandler(int signum);
+
+void exithandler(int signum);
 
 void activateGPIO(int gnum);
 
@@ -52,10 +73,14 @@ void setPin(char * path, char* flag);
 
 void isetPin(char * path, int flag);
 
-void setPins(int config);
-
 void initializePWMSlots();
 
 void activatePWM(char * pwm);
+
+void setDuty(struct Pwm *, int);
+
+void drive(int);
+
+void turn(int);
 
 #endif // _TANK_H_LAB_4

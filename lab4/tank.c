@@ -1,17 +1,90 @@
 #include "tank.h"
 
 struct sigaction sa;
+struct sigaction quit;
 
-// GPIO numbers corresponding to DB0-DB7
-int DB_GPIOS[] = {27, 47, 46, 65, 60};
-char * DB_VALS[] = {AIN1_VAL, AIN2_VAL, BIN1_VAL, BIN2_VAL, STBY_VAL};
-char * DB_DIRS[] = {AIN1_DIR, AIN2_DIR, BIN1_DIR, BIN2_DIR, STBY_DIR};
+// Information about the GPIOs we're using
+struct Gpio GPIOS[] = {
+  {27, AIN1_VAL, AIN1_DIR},
+  {47, AIN2_VAL, AIN2_DIR},
+  {46, BIN1_VAL, BIN1_DIR},
+  {65, BIN2_VAL, BIN2_DIR},
+  {60, STBY_VAL, STBY_DIR}
+};
 
-char *PPATHS[] = {A_PPATH, B_PPATH};
-char *DPATHS[] = {A_DPATH, B_DPATH};
-char *RPATHS[] = {A_RPATH, B_RPATH};
-char *SLOTS[] = {A_SLOT, B_SLOT};
+// Information about the PWMs we're using
+struct Pwm PWMS[] = {
+  {A_PPATH, A_DPATH, A_RPATH, A_SLOT, START_DUTY},
+  {B_PPATH, B_DPATH, B_RPATH, B_SLOT, START_DUTY}
+};
 
+int main() {
+  //activate GPIOs
+  for(int i = 0; i < NUM_DB; i++) {
+    activateGPIO(GPIOS[i].num);
+    setPin(GPIOS[i].direction_p, "out");
+  }
+
+  initializePWMSlots();
+
+  for (int i = 0; i < NUM_PWM; i++) {
+    activatePWM(PWMS[i].slot);
+  }
+
+  sa.sa_handler = &sighandler;
+  sigaction(SIGUSR1, &sa, NULL);
+
+  quit.sa_handler = &exithandler;
+  sigaction(SIGINT, &quit, NULL);
+
+  sigaction(SIGHUP, &quit, NULL);
+  sigaction(SIGSTOP, &quit, NULL);
+  sigaction(SIGKILL, &quit, NULL);
+  sigaction(SIGABRT, &quit, NULL);
+
+  //system("./adc_listener.exe &");
+
+  drive(100000);
+
+  while(1);
+}
+
+//signal handler for tank motors to turn
+void sighandler(int signum) {
+  printf("Got interrupted\n");
+  struct timespec t, t2;
+
+  t.tv_sec = 0;
+  t.tv_nsec = 50000000;
+  
+  while (PWMS[0].duty < PERIOD || PWMS[1].duty < PERIOD) {
+    //printf("In while loop\n");
+    printf("%d, %d\n", PWMS[0].duty, PWMS[1].duty);
+    setDuty(&PWMS[0], PWMS[0].duty + 25000);
+    setDuty(&PWMS[1], PWMS[1].duty + 25000);
+    nanosleep(&t, &t2);
+  }
+
+  drive(-250000);
+
+  t.tv_nsec = 0;
+  t.tv_sec = 1;
+
+  nanosleep(&t, &t2);
+
+  turn(100000);
+  
+  t.tv_sec = 2;
+
+  nanosleep(&t, &t2);
+
+  drive(100000);
+}
+
+void exithandler(int signum) {
+  isetPin(GPIOS[4].value_p, 0);
+  exit(0);
+}
 
 // Activate the GPIO corresponding to gnum
 void activateGPIO(int gnum) {
@@ -50,14 +123,6 @@ void isetPin(char * path, int flag) {
   fclose(f);
 }
 
-// Set pins to configuration specified by config
-void setPins(int config) {
-  for (int i = 0; i < NUM_DB; i++) {
-    isetPin(DB_VALS[NUM_DB - 1 - i], config % 2);
-    config /= 2;
-  }
-}
-
 void initializePWMSlots() {
   // Attempt to open the file; loop until file is found
   FILE *f = NULL;
@@ -82,57 +147,67 @@ void activatePWM(char * pwm) {
   fclose(f);
 }
 
-
-//signal handler for tank motors to turn
-void sighandler(int signum) {
-  int cur = 100000;
-  for (int i = 0; i < 10; i++) {
-    isetPin(DPATHS[0], cur + (i + 1) * 40000);
-    isetPin(DPATHS[1], cur + (i + 1) * 40000);
-
-    sleep(1);
+void setDuty(struct Pwm *p, int d) {
+  if (d > PERIOD) {
+    d = PERIOD;
   }
+
+  isetPin(p->duty_p, d);
+  p->duty = d;
 }
 
+void drive(int d) {
+  isetPin(GPIOS[4].value_p, 0);
 
+  isetPin(PWMS[0].run_p, 1);
+  isetPin(PWMS[1].run_p, 1);
 
-int main() {
-
-  //activate GPIOs
-  for(int i = 0; i < NUM_DB; i++) {
-    activateGPIO(DB_GPIOS[i]);
-    setPin(DB_DIRS[i], "out");
+  if (d < 0) {
+    isetPin(GPIOS[0].value_p, 0);
+    isetPin(GPIOS[1].value_p, 1);
+    isetPin(GPIOS[2].value_p, 0);
+    isetPin(GPIOS[3].value_p, 1);
+    d = d * -1;
+  } else {
+    isetPin(GPIOS[0].value_p, 1);
+    isetPin(GPIOS[1].value_p, 0);
+    isetPin(GPIOS[2].value_p, 1);
+    isetPin(GPIOS[3].value_p, 0);
   }
 
-  initializePWMSlots();
+  isetPin(PWMS[0].period_p, PERIOD);
+  isetPin(PWMS[1].period_p, PERIOD);
 
-  for (int i = 0; i < NUM_PWM; i++) {
-    activatePWM(SLOTS[i]);
-  }
+  setDuty(&PWMS[0], d);
+  setDuty(&PWMS[1], d);
 
-  sa.sa_handler = &sighandler;
-  sigaction(SIGUSR1, &sa, NULL);
-
-  printf("Got here\n");
-
-  isetPin(DB_VALS[4], 0);
-
-  isetPin(RPATHS[0], 1);
-  isetPin(RPATHS[1], 1);
-
-  isetPin(DB_VALS[0], 1);
-  isetPin(DB_VALS[1], 0);
-  isetPin(DB_VALS[2], 1);
-  isetPin(DB_VALS[3], 0);
-
-  isetPin(PPATHS[0], 500000);
-  isetPin(PPATHS[1], 500000);
-
-  isetPin(DPATHS[0], 100000);
-  isetPin(DPATHS[1], 100000);
-
-  isetPin(DB_VALS[4], 1);
-
-  while(1);
+  isetPin(GPIOS[4].value_p, 1);
 }
 
+void turn(int d) {
+  isetPin(GPIOS[4].value_p, 0);
+
+  isetPin(PWMS[0].run_p, 1);
+  isetPin(PWMS[1].run_p, 1);
+
+  if (d < 0) {
+    isetPin(GPIOS[0].value_p, 1);
+    isetPin(GPIOS[1].value_p, 0);
+    isetPin(GPIOS[2].value_p, 0);
+    isetPin(GPIOS[3].value_p, 1);
+    d = d * -1;
+  } else {
+    isetPin(GPIOS[0].value_p, 0);
+    isetPin(GPIOS[1].value_p, 1);
+    isetPin(GPIOS[2].value_p, 1);
+    isetPin(GPIOS[3].value_p, 0);
+  }
+
+  isetPin(PWMS[0].period_p, PERIOD);
+  isetPin(PWMS[1].period_p, PERIOD);
+
+  setDuty(&PWMS[0], d);
+  setDuty(&PWMS[1], d);
+
+  isetPin(GPIOS[4].value_p, 1);
+}

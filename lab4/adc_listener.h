@@ -18,8 +18,10 @@
 #define AIN3 "/sys/devices/ocp.3/helper.17/AIN3"
 #define AIN4 "/sys/devices/ocp.3/helper.17/AIN4"
 
-#define FREQUENCY 10
+#define FREQUENCY 20
 #define SIG_USER 20
+
+#define REPORT_T 10000000
 
 #define LEN 12
 
