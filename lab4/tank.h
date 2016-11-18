@@ -24,6 +24,12 @@
 #define BIN2_DIR "/sys/class/gpio/gpio65/direction"
 #define STBY_DIR "/sys/class/gpio/gpio60/direction"
 
+#define BL1_VAL "/sys/class/gpio/gpio49/value"
+#define BL2_VAL "/sys/class/gpio/gpio115/value"
+
+#define BL1_DIR "/sys/class/gpio/gpio49/direction"
+#define BL2_DIR "/sys/class/gpio/gpio115/direction"
+
 #define GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
 #define NUM_DB 5

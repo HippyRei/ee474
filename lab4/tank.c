@@ -25,6 +25,12 @@ int main() {
     setPin(GPIOS[i].direction_p, "out");
   }
 
+  activateGPIO(49);
+  activateGPIO(115);
+
+  setPin(BL1_DIR, "out");
+  setPin(BL2_DIR, "out");
+
   initializePWMSlots();
 
   for (int i = 0; i < NUM_PWM; i++) {
@@ -68,6 +74,8 @@ void sighandler(int signum) {
     nanosleep(&t, &t2);
   }
 
+  isetPin(BL1_VAL, 1);
+  isetPin(BL2_VAL, 1);
   isetPin(BUZZER_RPATH, 1);
   drive(-250000);
 
@@ -105,6 +113,8 @@ void sighandler(int signum) {
   isetPin(BUZZER_RPATH, 0);
 
   nanosleep(&t, &t2);
+  isetPin(BL1_VAL, 0);
+  isetPin(BL2_VAL, 0);
 
   drive(100000);
 }
