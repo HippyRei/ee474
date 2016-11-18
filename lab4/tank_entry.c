@@ -8,6 +8,20 @@ struct sigaction quit;
 
 int main() {
   pid_t pid1, pid2;
+
+  initializePWMSlots();
+  activatePWM(A_SLOT);
+  activatePWM(B_SLOT);
+
+  //sleep(1);
+
+  enable_adc();
+
+  activateGPIO(LED_GPIO_NUM);
+
+  setPin(LED_DIR, "out");
+  setPin(LED_VAL, "1");
+  
   while (1) {
     struct timespec t, t2;
 
@@ -18,6 +32,8 @@ int main() {
     setPin(SWITCH_DIR, "in");
 
     int on = 0;
+
+    system("echo got > /root/didit");
 
     while (!on) {
       FILE *f = NULL;
@@ -116,12 +132,25 @@ void activateGPIO(int gnum) {
 void enable_adc() {
    // Attempt to open the file; loop until file is found
   FILE *f = NULL;
-  while (f == NULL) {
-    f =  fopen(ACD_SLOTS_PATH, "w");
+  while (!access(ACD_SLOTS_PATH, W_OK));
+  f =  fopen(ACD_SLOTS_PATH, "w");
+  system("echo \"got here\" > /root/didit");
+
+  fprintf(f, "cape-bone-iio");
+  /*
+  FILE *test = NULL;
+  test = fopen(AIN1, "r");
+
+  while (test == NULL) {
+    sleep(1);
+    // Enable acd ports so we can read from them
+    fprintf(f, "cape-bone-iio");
+    test = fopen(AIN1, "r");
   }
 
-  // Enable acd ports so we can read from them
-  fprintf(f, "cape-bone-iio");
+  fclose(test);
+  */
+  
   fclose(f);
 }
 
@@ -133,5 +162,18 @@ void initializePWMSlots() {
   }
 
   fprintf(f, "am33xx_pwm");
+  fclose(f);
+}
+
+// Create configuration folders for PWM EHRPWM1A
+void activatePWM(char * pwm) {
+  // Attempt to open the file; loop until file is found
+  FILE *f = NULL;
+  while (f == NULL) {
+    f =  fopen(PWM_SLOTS_PATH, "w");
+  }
+
+  // Set up configuration folders for EHRPWM1A
+  fprintf(f, "%s", pwm);
   fclose(f);
 }
