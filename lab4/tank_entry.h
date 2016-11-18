@@ -26,6 +26,7 @@
 
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"
+#define BUZZER_SLOT "bone_pwm_P8_13"
 
 #define AIN1 "/sys/devices/ocp.3/helper.17/AIN1"
 

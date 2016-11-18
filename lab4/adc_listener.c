@@ -40,6 +40,8 @@ void timer_handler(int signum) {
 
       //send signal
       kill(pid, SIGUSR1);
+
+      sleep(3);
       
     }
     tot = 0;

@@ -38,13 +38,20 @@
 #define B_DPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/duty"
 #define B_RPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/run"
 
+#define BUZZER_PPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/period"
+#define BUZZER_DPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/duty"
+#define BUZZER_RPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/run"
+
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"
+#define BUZZER_SLOT "bone_pwm_P8_13"
 
 #define PWM_SLOTS_PATH "/sys/devices/bone_capemgr.9/slots"
 
 #define PERIOD 500000
 #define START_DUTY 100000
+
+#define T_BEEPS 250000000
 
 struct Pwm {
   char *period_p;

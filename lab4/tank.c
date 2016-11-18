@@ -31,6 +31,12 @@ int main() {
     activatePWM(PWMS[i].slot);
   }
 
+  activatePWM(BUZZER_SLOT);
+
+  isetPin(BUZZER_RPATH, 0);
+  isetPin(BUZZER_PPATH, 1000000);
+  isetPin(BUZZER_DPATH, 500000);
+
   sa.sa_handler = &sighandler;
   sigaction(SIGUSR1, &sa, NULL);
 
@@ -62,16 +68,41 @@ void sighandler(int signum) {
     nanosleep(&t, &t2);
   }
 
+  isetPin(BUZZER_RPATH, 1);
   drive(-250000);
 
-  t.tv_nsec = 0;
-  t.tv_sec = 1;
+  t.tv_nsec = 1000000000 - T_BEEPS;
+  t.tv_sec = 0;
+
+  nanosleep(&t, &t2);
+  isetPin(BUZZER_RPATH, 0);
+
+  t.tv_nsec = T_BEEPS;
+  nanosleep(&t, &t2);
+
+  isetPin(BUZZER_RPATH, 1);
+
+  turn(100000);
+
+  t.tv_nsec = 1000000000 - T_BEEPS;
 
   nanosleep(&t, &t2);
 
-  turn(100000);
-  
-  t.tv_sec = 2;
+  isetPin(BUZZER_RPATH, 0);
+
+  t.tv_nsec = T_BEEPS;
+
+  nanosleep(&t, &t2);
+
+  isetPin(BUZZER_RPATH, 1);
+
+  t.tv_nsec = 1000000000 - T_BEEPS;
+
+  nanosleep(&t, &t2);
+
+  t.tv_nsec = T_BEEPS;
+
+  isetPin(BUZZER_RPATH, 0);
 
   nanosleep(&t, &t2);
 
@@ -80,6 +111,7 @@ void sighandler(int signum) {
 
 void exithandler(int signum) {
   isetPin(GPIOS[4].value_p, 0);
+  isetPin(BUZZER_RPATH, 0);
   exit(0);
 }
 

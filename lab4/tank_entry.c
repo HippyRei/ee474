@@ -17,6 +17,8 @@ int main() {
 
   enable_adc();
 
+  activatePWM(BUZZER_SLOT);
+
   activateGPIO(LED_GPIO_NUM);
 
   setPin(LED_DIR, "out");
@@ -132,24 +134,10 @@ void activateGPIO(int gnum) {
 void enable_adc() {
    // Attempt to open the file; loop until file is found
   FILE *f = NULL;
-  while (!access(ACD_SLOTS_PATH, W_OK));
+  while (!!access(ACD_SLOTS_PATH, W_OK));
   f =  fopen(ACD_SLOTS_PATH, "w");
-  system("echo \"got here\" > /root/didit");
 
   fprintf(f, "cape-bone-iio");
-  /*
-  FILE *test = NULL;
-  test = fopen(AIN1, "r");
-
-  while (test == NULL) {
-    sleep(1);
-    // Enable acd ports so we can read from them
-    fprintf(f, "cape-bone-iio");
-    test = fopen(AIN1, "r");
-  }
-
-  fclose(test);
-  */
   
   fclose(f);
 }
@@ -169,9 +157,8 @@ void initializePWMSlots() {
 void activatePWM(char * pwm) {
   // Attempt to open the file; loop until file is found
   FILE *f = NULL;
-  while (f == NULL) {
-    f =  fopen(PWM_SLOTS_PATH, "w");
-  }
+  while (!!access(PWM_SLOTS_PATH, W_OK));
+  f =  fopen(PWM_SLOTS_PATH, "w");
 
   // Set up configuration folders for EHRPWM1A
   fprintf(f, "%s", pwm);
