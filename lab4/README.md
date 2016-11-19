@@ -16,11 +16,11 @@ Further toggling of the switch can start and stop the process as many times as
 the user likes.
 
 In order to ge the program to run on boot, a series of steps need to be taken.
-Refer to the subsection titled "tank_entry.sh" for instructions on how to set
-this up.
+Refer to the subsection titled "tank_entry.sh and tank_entry.service" for
+instructions on how to set this up.
 
-# tank_entry.sh
-This is a bash script that is used to launch the programs on boot. The following
+# tank_entry.sh and tank_entry.service
+These files are used to launch the programs on boot. The following
 instructions need to be followed before the boot sequence will work and the
 system can be used untethered:
 
@@ -28,9 +28,28 @@ system can be used untethered:
 2. Run 'make' in the command line and make sure all executables are compiled correctly
 3. Move tank_entry.sh to /usr/bin
 4. Type 'chmod u+x /usr/bin/tank_entry.sh' into the terminal
-5. 
+5. Move tank_entry.service to /lib/systemd
+6. Type 'cd /etc/systemd/system/' and 'ln /lib/systemd/<scriptname>.service <scriptname>.service' into the terminal
+
+All instructions were retreived from http://mybeagleboneblackfindings.blogspot.com/2013/10/running-script-on-beaglebone-black-boot.html
 
 # tank_entry.c
 This program listens for the switch to be toggled and creates the appropriate
 processes if it is. This is the entry point for the programs and is what is
-launched on boot.
+launched on boot. It allows both adc_listener.exe and tank.exe to be run in
+parallel when the switch is toggled.
+
+# tank.c
+This program is what actually controls the drive base. It will continue to drive
+forward until interrupted by another process using SIGUSR1. When interrupted, it
+will stop, back up, and turn left, all while using the buzzer and red LEDs.
+
+# adc_listener.c
+This program is what is used to retreive data from the ADC pin. Because the
+distance sensor is hooked up to this pin, it reads distance data and processes
+it. It samples the pin at 200 Hz and, if an object is too close, it will send
+an interrupt to tank.exe using signal SIGUSR1.
+
+# lab4_common.c
+This is a library of functions common to the programs in the system. The library
+provides a high-level API for interacting with individual GPIO and PWM pins.
