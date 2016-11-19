@@ -1,15 +1,11 @@
-#ifndef _TANK_H_LAB_4
-#define _TANK_H_LAB_4
+#ifndef TANK_H
+#define TANK_H
 
 #define _POSIX_C_SOURCE 199309L
 #include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include <signal.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <time.h>
+#include "lab4_common.h"
 
 //GPIOS
 #define AIN1_VAL "/sys/class/gpio/gpio27/value"
@@ -30,8 +26,6 @@
 #define BL1_DIR "/sys/class/gpio/gpio49/direction"
 #define BL2_DIR "/sys/class/gpio/gpio115/direction"
 
-#define GPIO_EXPORT_PATH "/sys/class/gpio/export"
-
 #define NUM_DB 5
 #define NUM_PWM 2
 
@@ -51,8 +45,6 @@
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"
 #define BUZZER_SLOT "bone_pwm_P8_13"
-
-#define PWM_SLOTS_PATH "/sys/devices/bone_capemgr.9/slots"
 
 #define PERIOD 500000
 #define START_DUTY 100000
@@ -80,20 +72,10 @@ void sighandler(int signum);
 
 void exithandler(int signum);
 
-void activateGPIO(int gnum);
-
-void setPin(char * path, char* flag);
-
-void isetPin(char * path, int flag);
-
-void initializePWMSlots();
-
-void activatePWM(char * pwm);
-
 void setDuty(struct Pwm *, int);
 
 void drive(int);
 
 void turn(int);
 
-#endif // _TANK_H_LAB_4
+#endif // TANK_H

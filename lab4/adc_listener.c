@@ -16,28 +16,12 @@ pid_t pid;
 
 //timer interrupt handler
 void timer_handler(int signum) {
-  /*send user defined signal (SIG_USER) to the process with PID
-    kill() doesn't neccessarily mean to terminate another process,
-    and in this case, it means to send signal "SIG_USER" to the
-    process with "pid"
-  */
-  /*
-  if(kill(pid, SIG_USER) != 0) { 
-    printf("Can't send msg\n");
-    exit(0);
-  }
-  printf("Signal sent\n");
-  */
-
+  
   tot += read_acd(AIN1);
   s++;
 
   if (s == FREQUENCY - 1) {
-    //printf("%d\n", tot / s);
     if (tot / s >= 900) {
-      printf("You're too close!\n");
-      printf("%d\n", pid);
-
       //send signal
       kill(pid, SIGUSR1);
 
@@ -49,18 +33,6 @@ void timer_handler(int signum) {
   }
 }
 
-
-void enable_acd() {
-   // Attempt to open the file; loop until file is found
-  FILE *f = NULL;
-  while (f == NULL) {
-    f =  fopen(ACD_SLOTS_PATH, "w");
-  }
-
-  // Enable acd ports so we can read from them
-  fprintf(f, "cape-bone-iio");
-  fclose(f);
-}
 
 int read_acd(char *path) {
   // Attempt to open the file; loop until file is found
@@ -84,7 +56,7 @@ int main() {
   tot = 0;
   s = 0;
   
-  enable_acd();
+  enable_adc();
 
   //get PID of tank process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
