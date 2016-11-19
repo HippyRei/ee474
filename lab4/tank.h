@@ -68,14 +68,11 @@ struct Gpio {
 };
 
 
-void sighandler(int signum);
-
-void exithandler(int signum);
-
+void sighandler(int);
+void exithandler(int);
 void setDuty(struct Pwm *, int);
-
 void drive(int);
-
 void turn(int);
+void setPins(int);
 
 #endif // TANK_H

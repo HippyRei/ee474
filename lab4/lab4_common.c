@@ -24,7 +24,7 @@ void activateGPIO(int gnum) {
 }
 
 void enable_adc() {
-   // Attempt to open the file; loop until file is found
+  // Attempt to open the file; loop until file is found
   FILE *f = NULL;
   while (!!access(SLOTS_PATH, W_OK));
   f =  fopen(SLOTS_PATH, "w");
