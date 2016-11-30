@@ -21,4 +21,4 @@
 int read_adc(char *);
 void timer_handler(int);
 
-#endif // ADC_LISTENER_H
+#endif //ADC_LISTENER_H
