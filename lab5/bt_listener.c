@@ -22,39 +22,50 @@ int main() {
     printf("file failed to open\n");
   }
 
-  memset (&ti, 0, sizeof ti);
+  memset (&ti, 0, sizeof(ti));
 
   if (tcgetattr(f, &ti) != 0) {
     printf("tcgetattr failed\n");
   }
 
+  // set file control options
+  fcntl(f, F_SETFL, O_ASYNC); // enable asynchronous execution
+
+
   cfsetospeed(&ti, BAUDRATE);
   cfsetispeed(&ti, BAUDRATE);
 
+  // OPTIONAL Set termio flags to 0
+  /*
+  ti.c_cflag = 0;
+  ti.c_iflag = 0;
+  ti.c_oflag = 0;
+  ti.c_lflag = 0;
+   */
+
   // control flag
-  // ti.c_cflag = 0;
-  ti.c_cflag |= (CREAD | CS8);
-  ti.c_cflag |= CRTSCTS;
-  ti.c_cflag &= ~(PARENB | PARODD);
+  ti.c_cflag |= (CREAD | CLOCAL | CS8);
+  ti.c_cflag &= ~PARENB;
   ti.c_cflag &= ~CSTOPB;
+  ti.c_cflag &= ~CSIZE;
 
   // input flag
-  ti.c_iflag = 0;
-  //ti.c_iflag &= ~(IXON | IXOFF | IXANY);
-  ti.c_iflag |= (IGNPAR | ICRNL);
+  ti.c_iflag &= ~(IXON | IXOFF | IXANY);
+  //ti.c_iflag |= (IGNPAR | ICRNL);
 
   // local flag
-  ti.c_lflag = 0;
   ti.c_lflag &= ~ICANON;
+  ti.c_lflag &= ~(ECHO | ECHOE | ISIG);
 
   // output flag
-  ti.c_oflag = 0;
+  ti.c_oflag &= ~OPOST;
 
   ti.c_cc[VMIN] = 0;
   ti.c_cc[VTIME] = 5;
 
-  tcflush(f, TCIFLUSH);
+  //tcflush(f, TCIFLUSH);
 
+  // define all the attributes into the buffer
   if (tcsetattr(f, TCSANOW, &ti) != 0) {
     printf("tcsetattr failed\n");
   }
@@ -77,7 +88,6 @@ int main() {
     }
   }
   close(f);
-  
 }
 
 void enable_UART1() {
