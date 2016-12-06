@@ -16,7 +16,7 @@ int main() {
 
   usleep(1000);
   //while (!!access(UART1, X_OK));
-  f = open(UART1, O_RDWR | O_NOCTTY | O_SYNC);
+  f = open(UART1, O_RDWR | O_NOCTTY | O_ASYNC);
 
   if (f < 0) {
     printf("file failed to open\n");
@@ -43,27 +43,28 @@ int main() {
   ti.c_lflag = 0;
    */
 
-  // control flag
-  ti.c_cflag |= (CREAD | CLOCAL | CS8);
-  ti.c_cflag &= ~PARENB;
-  ti.c_cflag &= ~CSTOPB;
-  ti.c_cflag &= ~CSIZE;
+  ti.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
 
   // input flag
-  ti.c_iflag &= ~(IXON | IXOFF | IXANY);
+  //ti.c_iflag &= ~(IXON | IXOFF | IXANY);
   //ti.c_iflag |= (IGNPAR | ICRNL);
+  ti.c_iflag = IGNPAR;
 
   // local flag
+  /*
   ti.c_lflag &= ~ICANON;
   ti.c_lflag &= ~(ECHO | ECHOE | ISIG);
+  */
+  ti.c_lflag = 0;
 
   // output flag
-  ti.c_oflag &= ~OPOST;
+  //ti.c_oflag &= ~OPOST;
+  ti.c_oflag = 0;
 
   ti.c_cc[VMIN] = 0;
   ti.c_cc[VTIME] = 5;
 
-  //tcflush(f, TCIFLUSH);
+  tcflush(f, TCIFLUSH);
 
   // define all the attributes into the buffer
   if (tcsetattr(f, TCSANOW, &ti) != 0) {
@@ -76,10 +77,10 @@ int main() {
   
 
   while (1) {
-    printf("start of while loop here\n");
-    len = read(f, &buffer, 5);
+    //printf("start of while loop here\n");
+    len = read(f, buffer, 100);
     buffer[len] = 0;
-    printf("value of len: %d\n", len);
+    //printf("value of len: %d\n", len);
   
     if (len != 0) {
       printf("%s\n", buffer);
