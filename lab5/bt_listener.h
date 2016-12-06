@@ -19,6 +19,8 @@
 
 #define BAUDRATE B115200
 
+#define LEN 12
+
 #define UART1 "/dev/ttyO2"
 
 void enable_UART1();

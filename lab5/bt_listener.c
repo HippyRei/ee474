@@ -4,11 +4,18 @@
 struct termios ti;
 int wait_flag = 1;
 
+//Process ID of the tank_entry process
+pid_t pid_tank_entry, pid_tank;
+
 // much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
 int main() {
-  int f, len;
+  int f, len, command;
   unsigned char buffer[100];
-  struct sigaction saio; 
+  struct sigaction saio;
+
+  // set PIDs to 0
+  pid_tank = 0;
+  pid_tank_entry = 0;
   
   enable_UART1();
 
@@ -60,24 +67,80 @@ int main() {
   }
   printf("finished initializing %d\n",f);
 
-  // Initialize sequence.
+  // Initialize sequence checking connection.
   len = write(f, "hello\n", 6);
   printf("value of len: %d\n", len);
+
+  // get PID of tank_entry process
+  //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
+  char line[LEN];
+  FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
+
+  fgets(line, LEN, cmd);
+  pid_tank_entry = strtoul(line, NULL, 10);
+
+  pclose(cmd);
   
 
+
+  // WE MAY RUN INTO A PROBLEM WITH THE CURRENT STRUCTURE IF WE GET AN INTERRUPT WHILE PROCESSING?
+  // IM NOT SURE...
+  
+  // Continue to loop, only executes a read when interrupted by SIGIO
   while (1) {
     usleep(100000);
-    //printf("start of while loop here\n");
+    
     if (wait_flag == 0) {
       len = read(f, buffer, 100);
       buffer[len] = 0;
-      //printf("value of len: %d\n", len);
   
       if (len != 0) {
 	printf("%s\n", buffer);
       } else {
-	//printf("nothing read\n");
+	printf("nothing read\n");
       }
+
+      command = buffer[0] * 256 + buffer[1];
+
+      if (command == 0xFFFF) {
+	union sigval tank_state_on;
+	tank_state_on.sival_int = 1; // "on"
+	sigqueue(pid_tank_entry, SIGUSR1, tank_state_on); //send signal to tank
+
+	// we have to wait here somehow, so that tank_entry can create tank -- maybe a signal?
+	// i'm implementing with a while loop now.
+
+	while (pid_tank == 0){
+	  // get PID of tank process
+	  //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
+	  char line[LEN];
+	  FILE *cmd = popen("pgrep -f tank.exe", "r");
+
+	  fgets(line, LEN, cmd);
+	  pid_tank = strtoul(line, NULL, 10);
+
+	  pclose(cmd);
+	}
+
+
+
+
+	
+      } else if (command == 0xFF00) {
+	union sigval tank_state_off;
+	tank_state_off.sival_int = 0;
+	sigqueue(pid_tank_entry, SIGUSR1, tank_state_off); //send signal to tank
+
+	// ensure that new tank pid is obtained on call of 0xFFFF
+	pid_tank = 0;
+
+	
+      } else {
+	union sigval tank_drive;
+	tank_drive.sival_int = command;
+	sigqueue(pid_tank, SIGUSR1, tank_drive); //send signal to tank
+      }
+
       wait_flag = 1;
     }
   }
@@ -95,8 +158,9 @@ void enable_UART1() {
   fclose(f);
 }
 
+//signal handler for SIGIO
 void signal_handler_IO (int status)
 {
-  printf("received SIGIO signal.\n");
+  printf("received command signal.\n");
   wait_flag = 0;
 }
