@@ -2,11 +2,12 @@
 
 //terminal interface structure.
 struct termios ti;
-
+int wait_flag = 1;
 
 int main() {
   int f, len;
   unsigned char buffer[100];
+  struct sigaction saio; 
 
   printf("entered loop\n");
   
@@ -14,13 +15,18 @@ int main() {
 
   printf("entered loop\n");
 
-  usleep(1000);
-  //while (!!access(UART1, X_OK));
-  f = open(UART1, O_RDWR | O_NOCTTY | O_ASYNC);
+  f = open(UART1, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
   if (f < 0) {
     printf("file failed to open\n");
   }
+
+  /* install the signal handler before making the device asynchronous */
+  saio.sa_handler = signal_handler_IO;
+  //saio.sa_mask = 0;
+  saio.sa_flags = 0;
+  saio.sa_restorer = NULL;
+  sigaction(SIGIO,&saio,NULL);
 
   memset (&ti, 0, sizeof(ti));
 
@@ -28,6 +34,8 @@ int main() {
     printf("tcgetattr failed\n");
   }
 
+  fcntl(f, F_SETOWN, getpid());
+  
   // set file control options
   fcntl(f, F_SETFL, O_ASYNC); // enable asynchronous execution
 
@@ -35,35 +43,19 @@ int main() {
   cfsetospeed(&ti, BAUDRATE);
   cfsetispeed(&ti, BAUDRATE);
 
-  // OPTIONAL Set termio flags to 0
-  /*
-  ti.c_cflag = 0;
-  ti.c_iflag = 0;
-  ti.c_oflag = 0;
-  ti.c_lflag = 0;
-   */
-
   ti.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
 
   // input flag
-  //ti.c_iflag &= ~(IXON | IXOFF | IXANY);
-  //ti.c_iflag |= (IGNPAR | ICRNL);
   ti.c_iflag = IGNPAR;
 
   // local flag
-  /*
-  ti.c_lflag &= ~ICANON;
-  ti.c_lflag &= ~(ECHO | ECHOE | ISIG);
-  */
-  ti.c_lflag = 0;
+  ti.c_lflag = ICANON;
 
   // output flag
-  //ti.c_oflag &= ~OPOST;
   ti.c_oflag = 0;
 
-  ti.c_cc[VMIN] = 0;
-  ti.c_cc[VTIME] = 5;
-
+  ti.c_cc[VMIN] = 2;
+  ti.c_cc[VTIME] = 0;
   tcflush(f, TCIFLUSH);
 
   // define all the attributes into the buffer
@@ -77,15 +69,19 @@ int main() {
   
 
   while (1) {
+    usleep(100000);
     //printf("start of while loop here\n");
-    len = read(f, buffer, 100);
-    buffer[len] = 0;
-    //printf("value of len: %d\n", len);
+    if (wait_flag == 0) {
+      len = read(f, buffer, 100);
+      buffer[len] = 0;
+      //printf("value of len: %d\n", len);
   
-    if (len != 0) {
-      printf("%s\n", buffer);
-    } else {
-      //printf("nothing read\n");
+      if (len != 0) {
+	printf("%s\n", buffer);
+      } else {
+	//printf("nothing read\n");
+      }
+      wait_flag = 1;
     }
   }
   close(f);
@@ -97,7 +93,13 @@ void enable_UART1() {
   while (!!access(DEVPATH, W_OK));
   f =  fopen(DEVPATH, "w");
 
-  fprintf(f, "BB-UART1");
+  fprintf(f, "BB-UART2");
   
   fclose(f);
+}
+
+void signal_handler_IO (int status)
+{
+  printf("received SIGIO signal.\n");
+  wait_flag = 0;
 }
