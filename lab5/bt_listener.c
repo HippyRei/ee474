@@ -4,16 +4,13 @@
 struct termios ti;
 int wait_flag = 1;
 
+// much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
 int main() {
   int f, len;
   unsigned char buffer[100];
   struct sigaction saio; 
-
-  printf("entered loop\n");
   
   enable_UART1();
-
-  printf("entered loop\n");
 
   f = open(UART1, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
@@ -34,15 +31,14 @@ int main() {
     printf("tcgetattr failed\n");
   }
 
-  fcntl(f, F_SETOWN, getpid());
-  
   // set file control options
+  fcntl(f, F_SETOWN, getpid()); // enable this process to receive signal
   fcntl(f, F_SETFL, O_ASYNC); // enable asynchronous execution
-
 
   cfsetospeed(&ti, BAUDRATE);
   cfsetispeed(&ti, BAUDRATE);
 
+  // control flags 
   ti.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
 
   // input flag
@@ -58,12 +54,13 @@ int main() {
   ti.c_cc[VTIME] = 0;
   tcflush(f, TCIFLUSH);
 
-  // define all the attributes into the buffer
+  // define all the attributes into the file from termios struct
   if (tcsetattr(f, TCSANOW, &ti) != 0) {
     printf("tcsetattr failed\n");
   }
   printf("finished initializing %d\n",f);
 
+  // Initialize sequence.
   len = write(f, "hello\n", 6);
   printf("value of len: %d\n", len);
   
