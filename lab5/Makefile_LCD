@@ -1,5 +1,17 @@
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-
+ccflags-y := -std=gnu99
+obj-m+= lcd.o
+# Kernel Source Directory
+KDIR = ../../bb-kernel/KERNEL
+PWD = $(shell pwd) 
+
 CC=gcc
 CFLAGS=-std=c99
+
+default:
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+
 
 all: adc_listener tank tank_entry bt_listener
 
@@ -16,4 +28,5 @@ bt_listener: bt_listener.c bt_listener.h
 	$(CC) $(CFLAGS) -o bt_listener.exe bt_listener.c 
 
 clean:
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean
 	rm -rf *.exe

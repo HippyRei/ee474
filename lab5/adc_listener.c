@@ -10,7 +10,7 @@ struct itimerspec itimer;
 timer_t timerid;
 
 //Running total among samples
-int tot;
+int tot1,tot2,tot3,tot4;
 //Sample number
 int s;
 
@@ -18,7 +18,10 @@ int s;
 pid_t pid;
 
 int main() {
-  tot = 0;
+  tot1 = 0;
+  tot2 = 0;
+  tot3 = 0;
+  tot4 = 0;
   s = 0;
   
   enable_adc();
@@ -55,8 +58,8 @@ int main() {
 
   return 0;
 }
-
-//Timer interrupt handler
+/*
+//Timer interrupt handler (this is with self driving from lab4)
 void timer_handler(int signum) {
   //Increment running total and sample number
   tot += read_adc(AIN1);
@@ -76,7 +79,43 @@ void timer_handler(int signum) {
     tot = 0;
     s = 0;
   }
+}*/
+
+//Timer interrupt handler (this is for lab5)
+void timer_handler(int signum){
+  //Increment running total and sample number for each analog input
+  tot1 += read_adc(AIN1); // Front
+  tot2 += read_adc(AIN2); // Right
+  tot3 += read_adc(AIN3); // Left
+  tot4 += read_adc(AIN4); // Rear
+  s++;
+  //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
+  if (s == FREQUENCY -1){
+    
+    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d", tot1, tot2,tot3,tot4);
+    // if at least one or more running totals reach above threshold
+    // we need to change case statements based on what we want
+    if(tot1/s >= 900 || tot2/s >= 900 || tot3/s >= 900 || tot4/s >= 900){
+
+      
+      printf("You're too close!\n");
+      printf("%d\n", pid);
+      //send signal
+      kill(pid, SIGUSR1);
+
+      // Wait for tank to finish its interupt sequence
+      sleep(3);
+      
+    }
+    //Reset Sampling totals
+    tot1 = 0;
+    tot2 = 0;
+    tot3 = 0;
+    tot4 = 0;
+    s = 0;
+  }
 }
+
 
 //Reads from the adc pin
 int read_adc(char *path) {
