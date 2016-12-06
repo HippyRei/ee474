@@ -9,7 +9,10 @@
 #include <time.h>
 #include "lab4_common.h"
 
-#define AIN1 "/sys/devices/ocp.3/helper.17/AIN1"
+#define AIN1 "/sys/devices/ocp.3/helper.17/AIN1" // Front
+#define AIN2 "/sys/devices/ocp.3/helper.17/AIN2" // Right
+#define AIN3 "/sys/devices/ocp.3/helper.17/AIN3" // Left
+#define AIN4 "/sys/devices/ocp.3/helper.17/AIN4" // Rear
 
 #define FREQUENCY 20
 #define SIG_USER 20
