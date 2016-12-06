@@ -68,7 +68,7 @@ struct Gpio {
 };
 
 
-void sighandler(int);
+void sighandler(int, siginfo_t *, void *);
 void exithandler(int);
 void setDuty(struct Pwm *, int);
 void drive(int);

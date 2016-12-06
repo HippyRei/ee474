@@ -46,7 +46,9 @@ int main() {
   isetPin(BUZZER_DPATH, 500000);
 
   //Set up appropriate interrupt handlers
-  sa.sa_handler = &sighandler;
+  sa.sa_sigaction = &sighandler;
+  sa.sa_flags = SA_SIGINFO;
+  sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
 
   quit.sa_handler = &exithandler;
@@ -62,7 +64,7 @@ int main() {
 }
 
 //signal handler for tank motors to turn
-void sighandler(int signum) {
+void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
   struct timespec t, t2;
 
   t.tv_sec = 0;
