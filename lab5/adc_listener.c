@@ -75,6 +75,7 @@ int main() {
        
   return 0;
 }
+
 /*
 //Timer interrupt handler (this is with self driving from lab4)
 void timer_handler(int signum) {

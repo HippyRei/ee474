@@ -45,7 +45,6 @@ int main() {
     pid1 = fork();
     if (pid1 == 0) { //Tank process
       static char *argv[] = {NULL};
-      printf("got here\n");
       execv("/root/lab5/tank.exe", argv);
       perror("First fork");
       exit(127);
