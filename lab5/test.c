@@ -23,4 +23,12 @@ int main() {
   if (c == 0x3E61) {
     printf("hi\n");
   }
+
+  a = c / 256;
+  b = c % 256;
+  printf("%d\n", a);
+  printf("%d\n", b);
 }
+
+
+//gcc -std=c99 test.c -o test.exe

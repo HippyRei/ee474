@@ -57,20 +57,31 @@ int main() {
   sigaction(SIGTERM, &quit, NULL);
 
   //Start driving forward
-  drive(100000);
+  //drive(100000);
 
   //Loop infinitely until interrupted
-  while(1);
+  //if running, wait 0.1 seconds to stop motors
+  while(1) {
+    usleep(100000); 
+    isetPin(GPIOS[4].value_p, 0);
+    
+  }
 }
 
 //signal handler for tank motors to turn
 void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
-  struct timespec t, t2;
+  //struct timespec t, t2;
+  int command;
+  
+  command = siginfo->si_value.sival_int;
 
+  drive(command);
+  /*
+   
   t.tv_sec = 0;
   t.tv_nsec = 50000000;
 
-  //Slow down
+  // slowdown
   while (PWMS[0].duty < PERIOD || PWMS[1].duty < PERIOD) {
     setDuty(&PWMS[0], PWMS[0].duty + 25000);
     setDuty(&PWMS[1], PWMS[1].duty + 25000);
@@ -134,6 +145,7 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
 
   //Start driving forward again
   drive(100000);
+  */
 }
 
 void exithandler(int signum) {
@@ -156,27 +168,45 @@ void setDuty(struct Pwm *p, int d) {
   p->duty = d;
 }
 
-//Drive forward if duty is positive or drive backward if duty is negative.
-//Absolute duty determines speed of motion
-void drive(int d) {
+//Drive that takes 2 byte drive code from bluetooth.
+void drive(int command) {
+  int rightm, leftm, rightdir, leftdir, rightduty, leftduty;
+    
   isetPin(GPIOS[4].value_p, 0);
 
+  rightm = command % 256; // lower byte
+  leftm = command / 256;  // upper byte
+
+  rightdir = rightm / 128;
+  leftdir = leftm / 128;
+
+  // calculate duty, lower is faster.
+  rightduty = PERIOD - (PERIOD/127)*(rightm % 128);
+  leftduty = PERIOD - (PERIOD/127)*(leftm % 128);
+
+  //set PWMS to run
   isetPin(PWMS[0].run_p, 1);
   isetPin(PWMS[1].run_p, 1);
 
-  if (d < 0) {
-    setPins(0x5);
-    d = d * -1;
+  if ((rightdir == 1) && (leftdir == 1)) {
+    setPins(0xa); // drive forward
+  } else if ((rightdir == 0) && (leftdir == 0)) {
+    setPins(0x5); // drive back
+  } else if ((rightdir == 1) && (leftdir == 0)) {
+    setPins(0x6); // turn left
   } else {
-    setPins(0xa);
+    setPins(0x9); // turn right
   }
 
+  // set period
   isetPin(PWMS[0].period_p, PERIOD);
   isetPin(PWMS[1].period_p, PERIOD);
 
-  setDuty(&PWMS[0], d);
-  setDuty(&PWMS[1], d);
+  // set duty
+  setDuty(&PWMS[0], leftduty);
+  setDuty(&PWMS[1], rightduty);
 
+  // standy off
   isetPin(GPIOS[4].value_p, 1);
 }
 
