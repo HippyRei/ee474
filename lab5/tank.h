@@ -39,9 +39,9 @@
 #define B_DPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/duty"
 #define B_RPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/run"
 
-#define BUZZER_PPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/period"
-#define BUZZER_DPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/duty"
-#define BUZZER_RPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/run"
+#define BUZZER_PPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/period" // originally .18 on all to get it to run with boot
+#define BUZZER_DPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/duty"
+#define BUZZER_RPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/run"
 
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"

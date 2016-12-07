@@ -45,11 +45,14 @@ int main() {
   isetPin(BUZZER_PPATH, 1000000);
   isetPin(BUZZER_DPATH, 500000);
 
+  printf("got here\n");
+  
   //Set up appropriate interrupt handlers
-  sa.sa_sigaction = &sighandler;
   sa.sa_flags = SA_SIGINFO;
+  sa.sa_sigaction = &sighandler;
   sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
+  printf("got here\n");
 
   quit.sa_handler = &exithandler;
   sigaction(SIGINT, &quit, NULL);
@@ -62,8 +65,9 @@ int main() {
   //Loop infinitely until interrupted
   //if running, wait 0.1 seconds to stop motors
   while(1) {
-    usleep(100000);
-    isetPin(GPIOS[4].value_p, 0);
+    usleep(1000000);
+    printf("looping\n");
+    //isetPin(GPIOS[4].value_p, 0);
     
   }
 }
@@ -72,8 +76,12 @@ int main() {
 void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
   //struct timespec t, t2;
   int command;
+
+  printf("received drive signal\n");
   
   command = siginfo->si_value.sival_int;
+
+  printf("%d\n", command);
 
   drive(command);
   /*

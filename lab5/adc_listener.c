@@ -134,7 +134,7 @@ void timer_handler(int signum){
     // Poll results to the bt_listener
     union sigval adc_state;
     adc_state.sival_ptr = tot;
-    printf("value sent (ptr): %d\n",tot);
+    //printf("value sent (ptr): %d\n",tot);
     int out_Result = sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
     printf("Result of sigqueue: %d/n",out_Result);
     //Reset Sampling totals

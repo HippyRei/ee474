@@ -80,6 +80,8 @@ int main() {
 
   pclose(cmd);
 
+  
+
   // sigval declarations
   union sigval tank_state_on, tank_state_off,tank_drive;
   
@@ -102,6 +104,8 @@ int main() {
 
       command = buffer[0] * 256 + buffer[1];
 
+      printf("%X\n", command);
+
       if (command == 0xFFFF) {
 	//union sigval tank_state_on;
 	tank_state_on.sival_int = 1; // "on"
@@ -122,6 +126,8 @@ int main() {
 	  pclose(cmd);
 	}
 
+	printf("tank PID is: %d\n", pid_tank);
+
 
 
 
@@ -137,7 +143,9 @@ int main() {
 	
       } else {
 	//union sigval tank_drive;
+	printf("send drive command\n");
 	tank_drive.sival_int = command;
+	printf("command: %d\n", command);
 	sigqueue(pid_tank, SIGUSR1, tank_drive); //send signal to tank
       }
 

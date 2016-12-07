@@ -2,13 +2,13 @@
 #define BT_LISTENER_H
 
 #define _BSD_SOURCE
-#define _POSIX_SOURCE 1
+#define _POSIX_C_SOURCE 199309L
 
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <time.h>
 #include <termios.h>
 #include <fcntl.h>
