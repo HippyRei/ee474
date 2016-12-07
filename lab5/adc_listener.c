@@ -43,8 +43,6 @@ int main() {
 
   fgets(line, LEN, cmd);
   pid = strtoul(line, NULL, 10);
-
-  pclose(cmd);
   printf("I FOUND TANK");
   
   //get PID of bt_listener
@@ -136,9 +134,9 @@ void timer_handler(int signum){
     // Poll results to the bt_listener
     union sigval adc_state;
     adc_state.sival_ptr = tot;
-    printf("value sent (ptr): %d\n",adc_state.sival_ptr);
-    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
-
+    printf("value sent (ptr): %d\n",tot);
+    int out_Result = sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+    printf("Result of sigqueue: %d/n",out_Result);
     //Reset Sampling totals
     tot[0] = 0;
     tot[1] = 0;

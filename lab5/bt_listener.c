@@ -75,14 +75,14 @@ int main() {
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
   char line[LEN];
   FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
-
   fgets(line, LEN, cmd);
   pid_tank_entry = strtoul(line, NULL, 10);
 
   pclose(cmd);
+
+  // sigval declarations
+  union sigval tank_state_on, tank_state_off,tank_drive;
   
-
-
   // WE MAY RUN INTO A PROBLEM WITH THE CURRENT STRUCTURE IF WE GET AN INTERRUPT WHILE PROCESSING?
   // IM NOT SURE...
   
@@ -103,7 +103,7 @@ int main() {
       command = buffer[0] * 256 + buffer[1];
 
       if (command == 0xFFFF) {
-	union sigval tank_state_on;
+	//union sigval tank_state_on;
 	tank_state_on.sival_int = 1; // "on"
 	sigqueue(pid_tank_entry, SIGUSR1, tank_state_on); //send signal to tank
 
@@ -127,7 +127,7 @@ int main() {
 
 	
       } else if (command == 0xFF00) {
-	union sigval tank_state_off;
+	//union sigval tank_state_off;
 	tank_state_off.sival_int = 0;
 	sigqueue(pid_tank_entry, SIGUSR1, tank_state_off); //send signal to tank
 
@@ -136,7 +136,7 @@ int main() {
 
 	
       } else {
-	union sigval tank_drive;
+	//union sigval tank_drive;
 	tank_drive.sival_int = command;
 	sigqueue(pid_tank, SIGUSR1, tank_drive); //send signal to tank
       }
