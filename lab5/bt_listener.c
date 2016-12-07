@@ -120,11 +120,14 @@ int main() {
 	  char line[LEN];
 	  FILE *cmd = popen("pgrep -f tank.exe", "r");
 
+	  printf("tank PID is %d\n", pid_tank);
+	  
 	  fgets(line, LEN, cmd);
 	  pid_tank = strtoul(line, NULL, 10);
 
 	  pclose(cmd);
 	}
+	
 
 	printf("tank PID is: %d\n", pid_tank);
 
