@@ -10,22 +10,32 @@ struct itimerspec itimer;
 timer_t timerid;
 
 //Running total among samples
-int tot1,tot2,tot3,tot4;
+//int tot1,tot2,tot3,tot4;
+int tot [4];
 //Sample number
 int s;
 
 //Process ID of the tank process
 pid_t pid;
 
-int main() {
-  tot1 = 0;
-  tot2 = 0;
-  tot3 = 0;
-  tot4 = 0;
-  s = 0;
-  
-  enable_adc();
+//Process ID of the bt_listener
+pid_t pid_bt;
 
+int main() {
+  printf("THIS IS THE BEGINNING");
+  tot[0] = 0;
+  tot[1] = 0;
+  tot[2] = 0;
+  tot[3] = 0;
+  
+  //tot1 = 0;
+  //tot2 = 0;
+  //tot3 = 0;
+  //tot4 = 0;
+  s = 0;
+ 
+  printf("IM HERE");
+  
   //get PID of tank process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
   char line[LEN];
@@ -35,7 +45,15 @@ int main() {
   pid = strtoul(line, NULL, 10);
 
   pclose(cmd);
-
+  printf("I FOUND TANK");
+  
+  //get PID of bt_listener
+  cmd = popen("pgrep -f bt_listener.exe", "r");
+  fgets(line, LEN, cmd);
+  pid_bt = strtoul(line, NULL, 10);
+  pclose(cmd);
+  printf("I FOUND BT_LISTENER");
+  
   //Set up sigevent for timer 
   memset(&sa, 0, sizeof(sa));
   
@@ -55,7 +73,8 @@ int main() {
 
   //Loop infinitely until killed
   while(1);
-
+     
+       
   return 0;
 }
 /*
@@ -83,19 +102,23 @@ void timer_handler(int signum) {
 
 //Timer interrupt handler (this is for lab5)
 void timer_handler(int signum){
+  
   //Increment running total and sample number for each analog input
-  tot1 += read_adc(AIN1); // Front
-  tot2 += read_adc(AIN2); // Right
-  tot3 += read_adc(AIN3); // Left
-  tot4 += read_adc(AIN4); // Rear
+  tot[0] += read_adc(AIN1); // Front
+  tot[1] += read_adc(AIN2); // Right
+  tot[2] += read_adc(AIN3); // Left
+  tot[3] += read_adc(AIN4); // Rear
   s++;
   //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
   if (s == FREQUENCY -1){
-    
-    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d", tot1, tot2,tot3,tot4);
+
+    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s,tot[1]/s,tot[2]/s,tot[3]/s);
     // if at least one or more running totals reach above threshold
     // we need to change case statements based on what we want
-    if(tot1/s >= 900 || tot2/s >= 900 || tot3/s >= 900 || tot4/s >= 900){
+
+    /*
+    //if(tot1/s > = 900){ // only for testing front scenario
+    else if(tot1/s >= 900 || tot2/s >= 900 || tot3/s >= 900 || tot4/s >= 900){
 
       
       printf("You're too close!\n");
@@ -106,12 +129,21 @@ void timer_handler(int signum){
       // Wait for tank to finish its interupt sequence
       sleep(3);
       
-    }
+    }*/
+
+    printf("tank ID: %d ;;;; bt_ID: %d\n", pid, pid_bt);
+    
+    // Poll results to the bt_listener
+    union sigval adc_state;
+    adc_state.sival_ptr = tot;
+    printf("value sent (ptr): %d\n",adc_state.sival_ptr);
+    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+
     //Reset Sampling totals
-    tot1 = 0;
-    tot2 = 0;
-    tot3 = 0;
-    tot4 = 0;
+    tot[0] = 0;
+    tot[1] = 0;
+    tot[2] = 0;
+    tot[3] = 0;
     s = 0;
   }
 }
