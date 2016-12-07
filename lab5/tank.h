@@ -1,11 +1,12 @@
 #ifndef TANK_H
 #define TANK_H
 
+#define _BSD_SOURCE
 #define _POSIX_C_SOURCE 199309L
+#include "lab4_common.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
-#include "lab4_common.h"
 
 //GPIOS
 #define AIN1_VAL "/sys/class/gpio/gpio27/value"

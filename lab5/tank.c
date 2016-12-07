@@ -62,7 +62,7 @@ int main() {
   //Loop infinitely until interrupted
   //if running, wait 0.1 seconds to stop motors
   while(1) {
-    usleep(100000); 
+    usleep(100000);
     isetPin(GPIOS[4].value_p, 0);
     
   }
