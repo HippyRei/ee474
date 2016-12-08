@@ -52,6 +52,8 @@
 
 #define T_BEEPS 250000000
 
+#define LEN 12
+
 struct Pwm {
   char *period_p;
   char *duty_p;

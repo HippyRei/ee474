@@ -17,8 +17,13 @@ struct Pwm PWMS[] = {
   {A_PPATH, A_DPATH, A_RPATH, A_SLOT, START_DUTY},
   {B_PPATH, B_DPATH, B_RPATH, B_SLOT, START_DUTY}
 };
+int selfdrive_flag = 0;
+
+// Process ID of adc_listener
+pid_t pid_adc;
 
 int main() {
+  
   //activate GPIOs
   for(int i = 0; i < NUM_DB; i++) {
     activateGPIO(GPIOS[i].num);
@@ -26,10 +31,10 @@ int main() {
   }
 
   //Activate blinker pins
-  activateGPIO(49);
-  activateGPIO(115);
-  setPin(BL1_DIR, "out");
-  setPin(BL2_DIR, "out");
+  //activateGPIO(49);
+  //activateGPIO(115);
+  //setPin(BL1_DIR, "out");
+  //setPin(BL2_DIR, "out");
 
   //Activate PWMs
   initializePWMSlots();
@@ -59,16 +64,106 @@ int main() {
 
   sigaction(SIGTERM, &quit, NULL);
 
-  //Start driving forward
-  //drive(100000);
+  while (pid_adc == 0){
+    // get PID of ADC for self drive
+    char line[LEN];
+    FILE *cmd = popen("pgrep -f adc_listener.exe", "r");
 
-  //Loop infinitely until interrupted
+    printf("adc_PID is %d\n", pid_adc);
+	  
+    fgets(line, LEN, cmd);
+    pid_adc = strtoul(line, NULL, 10);
+
+    pclose(cmd);
+
+    // check if pid is valid
+    int valid = kill(pid_adc, 0);
+
+    if (!!valid) {
+      pid_adc = 0;
+    }
+  } 
+
+  
   //if running, wait 0.1 seconds to stop motors
   while(1) {
     usleep(1000000);
     printf("looping\n");
     //isetPin(GPIOS[4].value_p, 0);
-    
+
+
+    // self driving implementation
+    while(selfdrive_flag){
+      struct timespec t, t2;
+      t.tv_sec = 0;
+      t.tv_nsec = 50000000;
+
+      // slowdown
+      while (PWMS[0].duty < PERIOD || PWMS[1].duty < PERIOD) {
+	setDuty(&PWMS[0], PWMS[0].duty + 25000);
+	setDuty(&PWMS[1], PWMS[1].duty + 25000);
+	nanosleep(&t, &t2);
+      }
+
+      //Turn blinkers on
+      //isetPin(BL1_VAL, 1);
+      //isetPin(BL2_VAL, 1);
+
+      //Turn buzzer on
+      isetPin(BUZZER_RPATH, 1);
+
+      //Start backing up
+      drive(-250000);
+
+      t.tv_nsec = 1000000000 - T_BEEPS;
+      t.tv_sec = 0;
+
+      nanosleep(&t, &t2);
+      //Turn buzzer off
+      isetPin(BUZZER_RPATH, 0);
+
+      t.tv_nsec = T_BEEPS;
+      nanosleep(&t, &t2);
+
+      //Turn buzzer on
+      isetPin(BUZZER_RPATH, 1);
+
+      //Start turning left
+      turn(100000);
+
+      t.tv_nsec = 1000000000 - T_BEEPS;
+
+      nanosleep(&t, &t2);
+
+      //Turn buzzer off
+      isetPin(BUZZER_RPATH, 0);
+
+      t.tv_nsec = T_BEEPS;
+
+      nanosleep(&t, &t2);
+
+      //Turn buzzer on
+      isetPin(BUZZER_RPATH, 1);
+
+      t.tv_nsec = 1000000000 - T_BEEPS;
+
+      nanosleep(&t, &t2);
+
+      t.tv_nsec = T_BEEPS;
+
+      //Turn buzzer off
+      isetPin(BUZZER_RPATH, 0);
+
+      nanosleep(&t, &t2);
+  
+      //Turn blinkers off
+      //isetPin(BL1_VAL, 0);
+      //isetPin(BL2_VAL, 0);
+
+      //Start driving forward again
+      drive(100000);
+
+    }
   }
 }
 
@@ -76,7 +171,7 @@ int main() {
 void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
   //struct timespec t, t2;
   int command;
-
+  union sigval self_drive;
   printf("received drive signal\n");
   
   command = siginfo->si_value.sival_int;
@@ -84,84 +179,23 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
   printf("%d\n", command);
 
   drive(command);
-  /*
-   
-  t.tv_sec = 0;
-  t.tv_nsec = 50000000;
-
-  // slowdown
-  while (PWMS[0].duty < PERIOD || PWMS[1].duty < PERIOD) {
-    setDuty(&PWMS[0], PWMS[0].duty + 25000);
-    setDuty(&PWMS[1], PWMS[1].duty + 25000);
-    nanosleep(&t, &t2);
+  if(command == "whatever"){
+    selfdrive_flag = 1;
+    self_drive.sival_int = 1;
   }
-
-  //Turn blinkers on
-  isetPin(BL1_VAL, 1);
-  isetPin(BL2_VAL, 1);
-
-  //Turn buzzer on
-  isetPin(BUZZER_RPATH, 1);
-
-  //Start backing up
-  drive(-250000);
-
-  t.tv_nsec = 1000000000 - T_BEEPS;
-  t.tv_sec = 0;
-
-  nanosleep(&t, &t2);
-  //Turn buzzer off
-  isetPin(BUZZER_RPATH, 0);
-
-  t.tv_nsec = T_BEEPS;
-  nanosleep(&t, &t2);
-
-  //Turn buzzer on
-  isetPin(BUZZER_RPATH, 1);
-
-  //Start turning left
-  turn(100000);
-
-  t.tv_nsec = 1000000000 - T_BEEPS;
-
-  nanosleep(&t, &t2);
-
-  //Turn buzzer off
-  isetPin(BUZZER_RPATH, 0);
-
-  t.tv_nsec = T_BEEPS;
-
-  nanosleep(&t, &t2);
-
-  //Turn buzzer on
-  isetPin(BUZZER_RPATH, 1);
-
-  t.tv_nsec = 1000000000 - T_BEEPS;
-
-  nanosleep(&t, &t2);
-
-  t.tv_nsec = T_BEEPS;
-
-  //Turn buzzer off
-  isetPin(BUZZER_RPATH, 0);
-
-  nanosleep(&t, &t2);
-  
-  //Turn blinkers off
-  isetPin(BL1_VAL, 0);
-  isetPin(BL2_VAL, 0);
-
-  //Start driving forward again
-  drive(100000);
-  */
+  else if(command == "turn off self drive"){
+    selfdrive_flag = 0;
+    self_drive.sival_int = 0;
+  }
+  sigqueue(pid_adc, SIGUSR1, self_drive);
 }
 
 void exithandler(int signum) {
   //Turn everything off
   isetPin(GPIOS[4].value_p, 0);
   isetPin(BUZZER_RPATH, 0);
-  isetPin(BL1_VAL, 0);
-  isetPin(BL2_VAL, 0);
+  //isetPin(BL1_VAL, 0);
+  //isetPin(BL2_VAL, 0);
   exit(0);
 }
 

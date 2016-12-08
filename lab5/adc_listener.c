@@ -1,7 +1,7 @@
 #include "adc_listener.h"
 
 //Timer event structures
-struct sigaction sa;
+struct sigaction sa, selfDrive;
 struct sigevent se;
 
 //Timer metadata
@@ -16,10 +16,13 @@ int tot [4];
 int s;
 
 //Process ID of the tank process
-pid_t pid;
+pid_t pid_tank;
 
 //Process ID of the bt_listener
 pid_t pid_bt;
+
+//Self-Driving Flag
+int selfdriving_flag = 0;
 
 int main() {
   printf("THIS IS THE BEGINNING");
@@ -37,7 +40,7 @@ int main() {
   FILE *cmd = popen("pgrep -f tank.exe", "r");
 
   fgets(line, LEN, cmd);
-  pid = strtoul(line, NULL, 10);
+  pid_tank = strtoul(line, NULL, 10);
   printf("I FOUND TANK");
   
   //get PID of bt_listener
@@ -64,6 +67,12 @@ int main() {
   itimer.it_value = ts;
   timer_settime(timerid, 0, &itimer, NULL);  
 
+  // set up a sigaction for self drive
+  selfDrive.sa_flags = SA_SIGINFO;
+  selfDrive.sa_sigaction = &selfdriving_handler;
+  sigemptyset(&selfDrive.sa_mask);
+  sigaction(SIGUSR1, &selfDrive, NULL);
+  
   //Loop infinitely until killed
   while(1);
      
@@ -141,7 +150,14 @@ void timer_handler(int signum){
     // Poll results to the bt_listener
     union sigval adc_state;
     adc_state.sival_int = send_data;
-    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+    //sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+
+    if(selfdriving_flag){
+      sigqueue(pid_tank, SIGUSR1, adc_state); //send signal to tank for self driving
+    }
+    else{ 
+      sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+    }
 
     //Reset Sampling totals
     send_data = 0;
@@ -150,7 +166,13 @@ void timer_handler(int signum){
     tot[2] = 0;
     tot[3] = 0;
     s = 0;
+    
   }
+}
+
+void selfdriving_handler(int signum, siginfo_t * siginfo, void * extra){
+  // set the self driving flag 
+  selfdriving_flag = siginfo->si_value.sival_int;
 }
 
 
