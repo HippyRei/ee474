@@ -89,16 +89,24 @@ int main() {
 
   // get PID of tank_entry process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
-  while (pid_tank_entry == 0) {
+  while (!pid_tank_entry) {
     char line[LEN];
     FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
     fgets(line, LEN, cmd);
     pid_tank_entry = strtoul(line, NULL, 10);
-
-    printf("tank_ENTRY PID is %d\n", pid_tank);
-    
     pclose(cmd);
+    
+    printf("tank_ENTRY PID is %d\n", pid_tank_entry);
+
+    // check if pid is valid
+    int valid = kill(pid_tank_entry, 0);
+
+    if (!!valid) {
+      pid_tank_entry = 0;
+    }
   }
+
+  printf("exited tank_entry pid loop\n");
 
   // sigval declarations
   union sigval tank_state_on, tank_state_off,tank_drive;
@@ -146,6 +154,13 @@ int main() {
 	  pid_tank = strtoul(line, NULL, 10);
 
 	  pclose(cmd);
+
+	  // check if pid is valid
+	  int valid = kill(pid_tank, 0);
+
+	  if (!!valid) {
+	    pid_tank = 0;
+	  }
 	}
 	
 
