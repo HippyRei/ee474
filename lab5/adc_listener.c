@@ -27,11 +27,6 @@ int main() {
   tot[1] = 0;
   tot[2] = 0;
   tot[3] = 0;
-  
-  //tot1 = 0;
-  //tot2 = 0;
-  //tot3 = 0;
-  //tot4 = 0;
   s = 0;
  
   printf("IM HERE");
@@ -101,6 +96,7 @@ void timer_handler(int signum) {
 
 //Timer interrupt handler (this is for lab5)
 void timer_handler(int signum){
+  int send_data;
   
   //Increment running total and sample number for each analog input
   tot[0] += read_adc(AIN1); // Front
@@ -111,7 +107,7 @@ void timer_handler(int signum){
   //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
   if (s == FREQUENCY -1){
 
-    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s,tot[1]/s,tot[2]/s,tot[3]/s);
+    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s, tot[1]/s, tot[2]/s, tot[3]/s);
     // if at least one or more running totals reach above threshold
     // we need to change case statements based on what we want
 
@@ -130,15 +126,25 @@ void timer_handler(int signum){
       
     }*/
 
-    printf("tank ID: %d ;;;; bt_ID: %d\n", pid, pid_bt);
+    // encode array into 3 byte int (adc val max = 1799/ 29 = 62)
+    send_data = (tot[0] / s / 29);
+    send_data *= 64;
+    send_data += (tot[1] / s / 29);
+    send_data *= 64;
+    send_data += (tot[2] / s / 29);
+    send_data *= 64;
+    send_data += (tot[3] / s / 29);
+
+    printf("data2: %d\n",send_data);
+    
     
     // Poll results to the bt_listener
     union sigval adc_state;
-    adc_state.sival_ptr = tot;
-    //printf("value sent (ptr): %d\n",tot);
-    int out_Result = sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
-    printf("Result of sigqueue: %d/n",out_Result);
+    adc_state.sival_int = send_data;
+    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+
     //Reset Sampling totals
+    send_data = 0;
     tot[0] = 0;
     tot[1] = 0;
     tot[2] = 0;

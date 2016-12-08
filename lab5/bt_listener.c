@@ -2,16 +2,25 @@
 
 //terminal interface structure.
 struct termios ti;
+
+// signal handler
+struct sigaction saio, adc_receive;
+
 int wait_flag = 1;
+
+int wait_adc_flag = 1;
+
+
+char adc_string[4] = "000\n";
 
 //Process ID of the tank_entry process
 pid_t pid_tank_entry, pid_tank;
+
 
 // much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
 int main() {
   int f, len, command;
   unsigned char buffer[100];
-  struct sigaction saio;
 
   // set PIDs to 0
   pid_tank = 0;
@@ -32,6 +41,13 @@ int main() {
   saio.sa_restorer = NULL;
   sigaction(SIGIO,&saio,NULL);
 
+  // set up signal handler for adc data retrieval
+  adc_receive.sa_flags = SA_SIGINFO;
+  adc_receive.sa_sigaction = &signal_handler_ADC;
+  sigemptyset(&adc_receive.sa_mask);
+  sigaction(SIGUSR1, &adc_receive, NULL);
+  printf("got here\n");
+  
   memset (&ti, 0, sizeof(ti));
 
   if (tcgetattr(f, &ti) != 0) {
@@ -73,26 +89,25 @@ int main() {
 
   // get PID of tank_entry process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
-  char line[LEN];
-  FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
-  fgets(line, LEN, cmd);
-  pid_tank_entry = strtoul(line, NULL, 10);
+  while (pid_tank_entry == 0) {
+    char line[LEN];
+    FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
+    fgets(line, LEN, cmd);
+    pid_tank_entry = strtoul(line, NULL, 10);
 
-  pclose(cmd);
-
-  
+    printf("tank_ENTRY PID is %d\n", pid_tank);
+    
+    pclose(cmd);
+  }
 
   // sigval declarations
   union sigval tank_state_on, tank_state_off,tank_drive;
-  
-  // WE MAY RUN INTO A PROBLEM WITH THE CURRENT STRUCTURE IF WE GET AN INTERRUPT WHILE PROCESSING?
-  // IM NOT SURE...
   
   // Continue to loop, only executes a read when interrupted by SIGIO
   while (1) {
     usleep(100000);
     
-    if (wait_flag == 0) {
+    if (!wait_flag) {
       len = read(f, buffer, 100);
       buffer[len] = 0;
   
@@ -100,6 +115,11 @@ int main() {
 	printf("%s\n", buffer);
       } else {
 	printf("nothing read\n");
+      }
+
+      //send adc information if new info has been received
+      if(!wait_adc_flag) {
+        write(f, adc_string, 4);
       }
 
       command = buffer[0] * 256 + buffer[1];
@@ -131,10 +151,6 @@ int main() {
 
 	printf("tank PID is: %d\n", pid_tank);
 
-
-
-
-	
       } else if (command == 0xFF00) {
 	//union sigval tank_state_off;
 	tank_state_off.sival_int = 0;
@@ -170,8 +186,40 @@ void enable_UART1() {
 }
 
 //signal handler for SIGIO
-void signal_handler_IO (int status)
-{
+void signal_handler_IO (int status) {
   printf("received command signal.\n");
   wait_flag = 0;
+}
+
+// signal handler of the ADC Data retrieval
+void signal_handler_ADC(int signum, siginfo_t * siginfo, void * extra ) {
+  int adc_data, front, right, left, rear;
+  printf("received adc data.\n");
+  adc_data = siginfo->si_value.sival_int;
+  int temp1 = adc_data;
+
+  printf("data: %d\n", adc_data);
+  
+  adc_string[2] = temp1 % 256;
+  temp1 /= 256;
+  adc_string[1] = temp1 % 256;
+  temp1 /= 256;
+  adc_string[0] = temp1;
+
+  printf("data: %s\n", adc_string);
+	 
+  
+  rear = (adc_data % 64) * 29;
+  adc_data /= 64;
+  left = (adc_data % 64) * 29;
+  adc_data /= 64;
+  right = (adc_data % 64) * 29;
+  adc_data /= 64;
+  front = adc_data * 29;
+
+  printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", front, right, left, rear);
+
+  // set wait_adc_flag to 0
+  wait_adc_flag = 0;
+
 }
