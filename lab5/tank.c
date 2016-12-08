@@ -1,8 +1,5 @@
 #include "tank.h"
 
-struct sigaction sa;
-struct sigaction quit;
-
 // Information about the GPIOs we're using
 struct Gpio GPIOS[] = {
   {27, AIN1_VAL, AIN1_DIR},
@@ -17,13 +14,20 @@ struct Pwm PWMS[] = {
   {A_PPATH, A_DPATH, A_RPATH, A_SLOT, START_DUTY},
   {B_PPATH, B_DPATH, B_RPATH, B_SLOT, START_DUTY}
 };
-int selfdrive_flag = 0;
+
+// signal action structures
+struct sigaction sa, quit, adc_receive;
+
+// self drive on or off
+int selfdrive_flag;
+
+// adc information
+int front, right, left, rear;
 
 // Process ID of adc_listener
 pid_t pid_adc;
 
 int main() {
-  
   //activate GPIOs
   for(int i = 0; i < NUM_DB; i++) {
     activateGPIO(GPIOS[i].num);
@@ -52,38 +56,41 @@ int main() {
 
   printf("got here\n");
   
-  //Set up appropriate interrupt handlers
+  // set up signal handler for handling commands
   sa.sa_flags = SA_SIGINFO;
   sa.sa_sigaction = &sighandler;
   sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
-  printf("got here\n");
 
+  // set up signal handler for adc data retrieval
+  adc_receive.sa_flags = SA_SIGINFO;
+  adc_receive.sa_sigaction = &signal_handler_ADC;
+  sigemptyset(&adc_receive.sa_mask);
+  sigaction(SIGUSR2, &adc_receive, NULL);
+
+  // set up signal handler for exit of process
   quit.sa_handler = &exithandler;
   sigaction(SIGINT, &quit, NULL);
-
   sigaction(SIGTERM, &quit, NULL);
 
+  // get PID of ADC
   while (pid_adc == 0){
-    // get PID of ADC for self drive
     char line[LEN];
     FILE *cmd = popen("pgrep -f adc_listener.exe", "r");
-
-    printf("adc_PID is %d\n", pid_adc);
-	  
+    printf("adc_PID is %d\n", pid_adc);  
     fgets(line, LEN, cmd);
     pid_adc = strtoul(line, NULL, 10);
-
     pclose(cmd);
 
     // check if pid is valid
     int valid = kill(pid_adc, 0);
-
     if (!!valid) {
       pid_adc = 0;
     }
   } 
 
+  // initialize self drive to off
+  selfdrive_flag = 0;
   
   //if running, wait 0.1 seconds to stop motors
   while(1) {
@@ -98,23 +105,10 @@ int main() {
       t.tv_sec = 0;
       t.tv_nsec = 50000000;
 
-      // slowdown
-      while (PWMS[0].duty < PERIOD || PWMS[1].duty < PERIOD) {
-	setDuty(&PWMS[0], PWMS[0].duty + 25000);
-	setDuty(&PWMS[1], PWMS[1].duty + 25000);
-	nanosleep(&t, &t2);
-      }
-
-      //Turn blinkers on
-      //isetPin(BL1_VAL, 1);
-      //isetPin(BL2_VAL, 1);
-
       //Turn buzzer on
       isetPin(BUZZER_RPATH, 1);
 
-      //Start backing up
-      drive(-250000);
-
+      /*
       t.tv_nsec = 1000000000 - T_BEEPS;
       t.tv_sec = 0;
 
@@ -155,14 +149,7 @@ int main() {
       isetPin(BUZZER_RPATH, 0);
 
       nanosleep(&t, &t2);
-  
-      //Turn blinkers off
-      //isetPin(BL1_VAL, 0);
-      //isetPin(BL2_VAL, 0);
-
-      //Start driving forward again
-      drive(100000);
-
+      */
     }
   }
 }
@@ -178,18 +165,21 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
 
   printf("%d\n", command);
 
-  drive(command);
-  if(command == "whatever"){
+  if(command == 0xFF01){      // self drive on
     selfdrive_flag = 1;
     self_drive.sival_int = 1;
+    sigqueue(pid_adc, SIGUSR1, self_drive);
   }
-  else if(command == "turn off self drive"){
+  else if(command == 0xFF02){ // self drive off
     selfdrive_flag = 0;
     self_drive.sival_int = 0;
+    sigqueue(pid_adc, SIGUSR1, self_drive);
+  } else {                    // manual drive
+    drive(command);
   }
-  sigqueue(pid_adc, SIGUSR1, self_drive);
 }
 
+//signal handler for exit
 void exithandler(int signum) {
   //Turn everything off
   isetPin(GPIOS[4].value_p, 0);
@@ -199,6 +189,23 @@ void exithandler(int signum) {
   exit(0);
 }
 
+// signal handler of the ADC Data retrieval
+void signal_handler_ADC(int signum, siginfo_t * siginfo, void * extra ) {
+  int adc_data;
+  printf("received adc data.\n");
+  adc_data = siginfo->si_value.sival_int;
+
+  // extract data
+  rear = (adc_data % 64) * 29;
+  adc_data /= 64;
+  left = (adc_data % 64) * 29;
+  adc_data /= 64;
+  right = (adc_data % 64) * 29;
+  adc_data /= 64;
+  front = adc_data * 29;
+}
+
+// set duty of a pwm
 void setDuty(struct Pwm *p, int d) {
   //Make sure duty isn't greater than period
   if (d > PERIOD) {

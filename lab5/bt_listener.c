@@ -47,7 +47,6 @@ int main() {
   adc_receive.sa_sigaction = &signal_handler_ADC;
   sigemptyset(&adc_receive.sa_mask);
   sigaction(SIGUSR1, &adc_receive, NULL);
-  printf("got here\n");
   
   memset (&ti, 0, sizeof(ti));
 
@@ -87,6 +86,7 @@ int main() {
   // Initialize sequence checking connection.
   write(f, "hello\n", 6);
 
+  
   // get PID of tank_entry process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
   while (!pid_tank_entry) {
@@ -132,8 +132,8 @@ int main() {
       // Analyze which command to execute.
       if (command == 0xFFFF) {
 	union sigval tank_state_on;
-	tank_state_on.sival_int = 1;     // on command
-	sigqueue(pid_tank_entry, SIGUSR1, tank_state_on); //send signal to tank
+	tank_state_on.sival_int = 1;                             // on command
+	sigqueue(pid_tank_entry, SIGUSR1, tank_state_on);
 
 	// get PID of tank process each time
 	// from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
@@ -155,20 +155,23 @@ int main() {
 	}
 	printf("tank PID is: %d\n", pid_tank);
 
-      } else if (command == 0xFF00) {     // off command
+      } else if (command == 0xFF00) {                          // off command
 	union sigval tank_state_off;
 	tank_state_off.sival_int = 0;
-	sigqueue(pid_tank_entry, SIGUSR1, tank_state_off); //send signal to tank
+	sigqueue(pid_tank_entry, SIGUSR1, tank_state_off);
 
 	// ensure that new tank pid is obtained on call of 0xFFFF
 	pid_tank = 0;
-
-      } else {                           // drive command
+      } else if ((command == 0xFF01) || (command == 0xFF01)) { // self drive
+	union sigval tank_command;
+	tank_command.sival_int = command;
+	sigqueue(pid_tank, SIGUSR1, tank_command);       
+      } else {                                                 // drive command
 	union sigval tank_drive;
 	printf("send drive command\n");
 	tank_drive.sival_int = command;
 	printf("command: %d\n", command);
-	sigqueue(pid_tank, SIGUSR1, tank_drive); //send signal to tank
+	sigqueue(pid_tank, SIGUSR1, tank_drive);
       }
 
       wait_flag = 1;

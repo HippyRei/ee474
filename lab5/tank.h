@@ -73,6 +73,7 @@ struct Gpio {
 
 void sighandler(int, siginfo_t *, void *);
 void exithandler(int);
+void signal_handler_ADC(int, siginfo_t *, void *);
 void setDuty(struct Pwm *, int);
 void drive(int);
 void turn(int);

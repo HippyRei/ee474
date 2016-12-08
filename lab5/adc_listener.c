@@ -1,7 +1,7 @@
 #include "adc_listener.h"
 
 //Timer event structures
-struct sigaction sa, selfDrive;
+struct sigaction sa, selfdrive;
 struct sigevent se;
 
 //Timer metadata
@@ -22,17 +22,18 @@ pid_t pid_tank;
 pid_t pid_bt;
 
 //Self-Driving Flag
-int selfdriving_flag = 0;
+int selfdriving_flag;
 
 int main() {
-  printf("THIS IS THE BEGINNING");
+  // initialize averaging to 0
   tot[0] = 0;
   tot[1] = 0;
   tot[2] = 0;
   tot[3] = 0;
   s = 0;
- 
-  printf("IM HERE");
+
+  // self driving initially off
+  selfdriving_flag = 0;
   
   //get PID of tank process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
@@ -68,10 +69,10 @@ int main() {
   timer_settime(timerid, 0, &itimer, NULL);  
 
   // set up a sigaction for self drive
-  selfDrive.sa_flags = SA_SIGINFO;
-  selfDrive.sa_sigaction = &selfdriving_handler;
-  sigemptyset(&selfDrive.sa_mask);
-  sigaction(SIGUSR1, &selfDrive, NULL);
+  selfdrive.sa_flags = SA_SIGINFO;
+  selfdrive.sa_sigaction = &selfdriving_handler;
+  sigemptyset(&selfdrive.sa_mask);
+  sigaction(SIGUSR1, &selfdrive, NULL);
   
   //Loop infinitely until killed
   while(1);
@@ -150,13 +151,10 @@ void timer_handler(int signum){
     // Poll results to the bt_listener
     union sigval adc_state;
     adc_state.sival_int = send_data;
-    //sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
 
     if(selfdriving_flag){
-      sigqueue(pid_tank, SIGUSR1, adc_state); //send signal to tank for self driving
-    }
-    else{ 
-      sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+      sigqueue(pid_tank, SIGUSR2, adc_state); //send signal to tank for self driving
     }
 
     //Reset Sampling totals
