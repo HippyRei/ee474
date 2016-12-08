@@ -10,16 +10,17 @@ int wait_flag = 1;
 
 int wait_adc_flag = 1;
 
-
+// Stores adc values in 3 bytes to send to controller.
 char adc_string[4] = "000\n";
 
-//Process ID of the tank_entry process
+// Process ID of the tank_entry process
 pid_t pid_tank_entry, pid_tank;
 
-
+// 
 // much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
 int main() {
-  int f, len, command;
+  int f; // serial file descriptor
+  int len, command;
   unsigned char buffer[100];
 
   // set PIDs to 0
@@ -84,8 +85,7 @@ int main() {
   printf("finished initializing %d\n",f);
 
   // Initialize sequence checking connection.
-  len = write(f, "hello\n", 6);
-  printf("value of len: %d\n", len);
+  write(f, "hello\n", 6);
 
   // get PID of tank_entry process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
@@ -142,18 +142,16 @@ int main() {
 	// we have to wait here somehow, so that tank_entry can create tank -- maybe a signal?
 	// i'm implementing with a while loop now.
 
+	// get PID of tank process each time
+	// from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
 	while (pid_tank == 0){
-	  // get PID of tank process
-	  //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
 	  char line[LEN];
 	  FILE *cmd = popen("pgrep -f tank.exe", "r");
-
-	  printf("tank PID is %d\n", pid_tank);
-	  
 	  fgets(line, LEN, cmd);
 	  pid_tank = strtoul(line, NULL, 10);
-
 	  pclose(cmd);
+	  
+	  printf("tank PID is %d\n", pid_tank);
 
 	  // check if pid is valid
 	  int valid = kill(pid_tank, 0);
