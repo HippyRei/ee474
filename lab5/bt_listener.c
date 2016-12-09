@@ -10,6 +10,8 @@ int wait_flag = 1;
 
 int wait_adc_flag = 1;
 
+int self_drive_flag = 0;
+
 // Stores adc values in 3 bytes to send to controller.
 char adc_string[4] = "000\n";
 
@@ -165,20 +167,29 @@ int main() {
 
 	//reset bufffer
 	memset(buffer, 0, 100);
-      } else if ((command == 0xFF01) || (command == 0xFF02)) { // self drive
+      } else if ((command == 0xFF01 && !self_drive_flag) || (command == 0xFF02)) { // self drive
 	union sigval tank_command;
 	printf("self drive command: %d\n", command);
+
+	// set self drive flag
+	if (command == 0xFF01) {
+	  self_drive_flag = 1;
+	} else {
+	  self_drive_flag = 0;
+	}
 	tank_command.sival_int = command;
 	sigqueue(pid_tank, SIGUSR1, tank_command);
 
 	//reset bufffer
 	memset(buffer, 0, 100);
-      } else {                                                 // drive command
+      } else if (!self_drive_flag) {                                                 // drive command
 	union sigval tank_drive;
 	printf("send drive command\n");
 	tank_drive.sival_int = command;
 	printf("command: %d\n", command);
 	sigqueue(pid_tank, SIGUSR1, tank_drive);
+      } else {
+	memset(buffer, 0, 100);
       }
 
       wait_flag = 1;

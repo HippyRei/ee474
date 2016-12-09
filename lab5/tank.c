@@ -27,6 +27,10 @@ int front, right, left, rear;
 // Process ID of adc_listener
 pid_t pid_adc;
 
+// uninterrupted sleep time
+int sleep_time;
+
+
 int main() {
   //activate GPIOs
   for(int i = 0; i < NUM_DB; i++) {
@@ -62,13 +66,11 @@ int main() {
   sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
 
-  /*
   // set up signal handler for adc data retrieval
   adc_receive.sa_flags = SA_SIGINFO;
   adc_receive.sa_sigaction = &signal_handler_ADC;
   sigemptyset(&adc_receive.sa_mask);
   sigaction(SIGUSR2, &adc_receive, NULL);
-  */
 
   // set up signal handler for exit of process
   quit.sa_handler = &exithandler;
@@ -93,7 +95,14 @@ int main() {
 
   // initialize self drive to off
   selfdrive_flag = 0;
+
+  // initialize blocking signals
+  sigset_t block_set;
+  sigemptyset(&block_set);
+  sigaddset(&block_set, SIGUSR2);
+  //sigaddset(&block_set, SIGUSR1);
   
+
   //if running, wait 0.1 seconds to stop motors
   while(1) {
     usleep(1000000);
@@ -103,27 +112,32 @@ int main() {
 
     // self driving implementation
     while(selfdrive_flag){
-      printf("SELF DRIVE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      printf("selfdrivingggggggggggg\n");
 
       usleep(1000000);
       
-      //drive(0xFAFA); // forward
+      drive(0xFAFA); // forward
 
-      /*
       if (front > 800) {
-	if( left > right) {
-	  drive(0x2020);
+	if( left > right) {                             //right 
+	  sigprocmask(SIG_BLOCK, &block_set, NULL);
+	  drive(0x4040);
 	  usleep(1000000);
 	  drive(0xFA7A);    //turn right;
-	  usleep(200000);
-	} else {
-	  drive(0x2020);
+	  usleep(300000);
+	  drive(0xFAFA);
+	  sigprocmask(SIG_UNBLOCK, &block_set, NULL);
+	} else {                                        //left 
+	  sigprocmask(SIG_BLOCK, &block_set, NULL);
+	  drive(0x4040);
 	  usleep(1000000);
-	  drive(0x7AFA);
-	  usleep(200000);
+	 sigprocmask(SIG_UNBLOCK, &block_set, NULL);
+	  drive(0x7AFA);    //turn left;
+	  usleep(300000);
+	  drive(0xFAFA);
 	}
+
       }
-      */
       
       
     }
@@ -145,6 +159,7 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
     selfdrive_flag = 1;
     self_drive.sival_int = 1;
     sigqueue(pid_adc, SIGUSR1, self_drive);
+    printf("self drive: on\n");
   }
   else if(command == 0xFF02){ // self drive off
     selfdrive_flag = 0;
@@ -153,6 +168,7 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
 
     drive(0x8080);
     isetPin(BUZZER_RPATH, 0);
+    printf("self drive: off\n");
   } else {                    // manual drive
     drive(command);
   }
@@ -165,6 +181,8 @@ void exithandler(int signum) {
   isetPin(BUZZER_RPATH, 0);
   //isetPin(BL1_VAL, 0);
   //isetPin(BL2_VAL, 0);
+
+  printf("ran exit process\n");
   exit(0);
 }
 
