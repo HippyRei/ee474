@@ -124,17 +124,17 @@ int main() {
 	  drive(0x4040);
 	  usleep(1000000);
 	  drive(0xFA7A);    //turn right;
-	  usleep(300000);
+	  usleep(1000000);
 	  drive(0xFAFA);
 	  sigprocmask(SIG_UNBLOCK, &block_set, NULL);
 	} else {                                        //left 
 	  sigprocmask(SIG_BLOCK, &block_set, NULL);
 	  drive(0x4040);
 	  usleep(1000000);
-	 sigprocmask(SIG_UNBLOCK, &block_set, NULL);
 	  drive(0x7AFA);    //turn left;
-	  usleep(300000);
+	  usleep(1000000);
 	  drive(0xFAFA);
+	  sigprocmask(SIG_UNBLOCK, &block_set, NULL);
 	}
 
       }
