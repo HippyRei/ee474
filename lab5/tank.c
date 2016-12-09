@@ -192,6 +192,7 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
     self_drive.sival_int = 0;
     sigqueue(pid_adc, SIGUSR1, self_drive);
 
+    drive(0x8080);
     isetPin(BUZZER_RPATH, 0);
   } else {                    // manual drive
     drive(command);

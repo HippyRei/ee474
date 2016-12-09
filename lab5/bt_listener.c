@@ -176,6 +176,7 @@ int main() {
       }
 
       wait_flag = 1;
+      tcflush(f, TCIOFLUSH);
     }
   }
   close(f);
