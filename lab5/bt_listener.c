@@ -164,8 +164,9 @@ int main() {
 	pid_tank = 0;
       } else if ((command == 0xFF01) || (command == 0xFF01)) { // self drive
 	union sigval tank_command;
+	printf("self drive command: %d\n", command);
 	tank_command.sival_int = command;
-	sigqueue(pid_tank, SIGUSR1, tank_command);       
+	sigqueue(pid_tank, SIGUSR1, tank_command);
       } else {                                                 // drive command
 	union sigval tank_drive;
 	printf("send drive command\n");

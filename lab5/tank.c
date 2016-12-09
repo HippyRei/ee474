@@ -76,7 +76,7 @@ int main() {
   // get PID of ADC
   while (pid_adc == 0){
     char line[LEN];
-    FILE *cmd = popen("pgrep -f adc_listener.exe", "r");
+    FILE *cmd = popen("pgrep -f adc_listener.ex", "r"); // b/c adc_listener.exe comes up as .ex
     printf("adc_PID is %d\n", pid_adc);  
     fgets(line, LEN, cmd);
     pid_adc = strtoul(line, NULL, 10);
@@ -105,8 +105,25 @@ int main() {
       t.tv_sec = 0;
       t.tv_nsec = 50000000;
 
+      drive(0xFAFA); // forward
+
+      if (front > 800) {
+	if( left > right) {
+	  drive(0x2020);
+	  usleep(1000000);
+	  drive(0xFA7A);    //turn right;
+	  usleep(200000);
+	} else {
+	  drive(0x2020);
+	  usleep(1000000);
+	  drive(0x7AFA);
+	  usleep(200000);
+	}
+      }
+      
+      
       //Turn buzzer on
-      isetPin(BUZZER_RPATH, 1);
+      //isetPin(BUZZER_RPATH, 1);
 
       /*
       t.tv_nsec = 1000000000 - T_BEEPS;
@@ -174,6 +191,8 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
     selfdrive_flag = 0;
     self_drive.sival_int = 0;
     sigqueue(pid_adc, SIGUSR1, self_drive);
+
+    isetPin(BUZZER_RPATH, 0);
   } else {                    // manual drive
     drive(command);
   }
@@ -192,7 +211,7 @@ void exithandler(int signum) {
 // signal handler of the ADC Data retrieval
 void signal_handler_ADC(int signum, siginfo_t * siginfo, void * extra ) {
   int adc_data;
-  printf("received adc data.\n");
+  printf("received adc data self drive mode!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   adc_data = siginfo->si_value.sival_int;
 
   // extract data
