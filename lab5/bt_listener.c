@@ -162,11 +162,17 @@ int main() {
 
 	// ensure that new tank pid is obtained on call of 0xFFFF
 	pid_tank = 0;
-      } else if ((command == 0xFF01) || (command == 0xFF01)) { // self drive
+
+	//reset bufffer
+	memset(buffer, 0, 100);
+      } else if ((command == 0xFF01) || (command == 0xFF02)) { // self drive
 	union sigval tank_command;
 	printf("self drive command: %d\n", command);
 	tank_command.sival_int = command;
 	sigqueue(pid_tank, SIGUSR1, tank_command);
+
+	//reset bufffer
+	memset(buffer, 0, 100);
       } else {                                                 // drive command
 	union sigval tank_drive;
 	printf("send drive command\n");

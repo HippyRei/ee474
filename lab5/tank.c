@@ -62,11 +62,13 @@ int main() {
   sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
 
+  /*
   // set up signal handler for adc data retrieval
   adc_receive.sa_flags = SA_SIGINFO;
   adc_receive.sa_sigaction = &signal_handler_ADC;
   sigemptyset(&adc_receive.sa_mask);
   sigaction(SIGUSR2, &adc_receive, NULL);
+  */
 
   // set up signal handler for exit of process
   quit.sa_handler = &exithandler;
@@ -101,12 +103,13 @@ int main() {
 
     // self driving implementation
     while(selfdrive_flag){
-      struct timespec t, t2;
-      t.tv_sec = 0;
-      t.tv_nsec = 50000000;
+      printf("SELF DRIVE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 
-      drive(0xFAFA); // forward
+      usleep(1000000);
+      
+      //drive(0xFAFA); // forward
 
+      /*
       if (front > 800) {
 	if( left > right) {
 	  drive(0x2020);
@@ -120,53 +123,9 @@ int main() {
 	  usleep(200000);
 	}
       }
-      
-      
-      //Turn buzzer on
-      //isetPin(BUZZER_RPATH, 1);
-
-      /*
-      t.tv_nsec = 1000000000 - T_BEEPS;
-      t.tv_sec = 0;
-
-      nanosleep(&t, &t2);
-      //Turn buzzer off
-      isetPin(BUZZER_RPATH, 0);
-
-      t.tv_nsec = T_BEEPS;
-      nanosleep(&t, &t2);
-
-      //Turn buzzer on
-      isetPin(BUZZER_RPATH, 1);
-
-      //Start turning left
-      turn(100000);
-
-      t.tv_nsec = 1000000000 - T_BEEPS;
-
-      nanosleep(&t, &t2);
-
-      //Turn buzzer off
-      isetPin(BUZZER_RPATH, 0);
-
-      t.tv_nsec = T_BEEPS;
-
-      nanosleep(&t, &t2);
-
-      //Turn buzzer on
-      isetPin(BUZZER_RPATH, 1);
-
-      t.tv_nsec = 1000000000 - T_BEEPS;
-
-      nanosleep(&t, &t2);
-
-      t.tv_nsec = T_BEEPS;
-
-      //Turn buzzer off
-      isetPin(BUZZER_RPATH, 0);
-
-      nanosleep(&t, &t2);
       */
+      
+      
     }
   }
 }

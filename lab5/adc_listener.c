@@ -117,26 +117,8 @@ void timer_handler(int signum){
   //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
   if (s == FREQUENCY -1){
 
-    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s, tot[1]/s, tot[2]/s, tot[3]/s);
-    // if at least one or more running totals reach above threshold
-    // we need to change case statements based on what we want
-
-    /*
-    //if(tot1/s > = 900){ // only for testing front scenario
-    else if(tot1/s >= 900 || tot2/s >= 900 || tot3/s >= 900 || tot4/s >= 900){
-
-      
-      printf("You're too close!\n");
-      printf("%d\n", pid);
-      //send signal
-      kill(pid, SIGUSR1);
-
-      // Wait for tank to finish its interupt sequence
-      sleep(3);
-      
-    }*/
-
-    // encode array into 3 byte int (adc val max = 1799/ 29 = 62)
+    //printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s, tot[1]/s, tot[2]/s, tot[3]/s);
+    
     send_data = (tot[0] / s / 29);
     send_data *= 64;
     send_data += (tot[1] / s / 29);
@@ -145,7 +127,7 @@ void timer_handler(int signum){
     send_data *= 64;
     send_data += (tot[3] / s / 29);
 
-    printf("data2: %d\n",send_data);
+    //printf("data2: %d\n",send_data);
     
     
     // Poll results to the bt_listener
