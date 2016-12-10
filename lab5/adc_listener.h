@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <time.h>
-#include "lab4_common.h"
+#include "lab5_common.h"
 
 #define AIN1 "/sys/devices/ocp.3/helper.17/AIN1" // Front
 #define AIN2 "/sys/devices/ocp.3/helper.17/AIN2" // Right

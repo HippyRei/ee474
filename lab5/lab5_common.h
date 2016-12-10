@@ -1,5 +1,5 @@
-#ifndef LAB_4_COMMON_H
-#define LAB_4_COMMON_H
+#ifndef LAB_5_COMMON_H
+#define LAB_5_COMMON_H
 
 #include <stdio.h>
 #include <unistd.h>
@@ -14,4 +14,4 @@ void enable_adc();
 void initializePWMSlots();
 void activatePWM(char *);
 
-#endif // LAB_4_COMMON_H
+#endif // LAB_5_COMMON_H

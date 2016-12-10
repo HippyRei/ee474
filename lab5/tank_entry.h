@@ -8,7 +8,7 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include "lab4_common.h"
+#include "lab5_common.h"
 
 #define SWITCH_GPIO_NUM 20
 #define SWITCH_VAL "/sys/class/gpio/gpio20/value"

@@ -1,4 +1,4 @@
-#include "lab4_common.h"
+#include "lab5_common.h"
 
 // Write flag to the file corresponding to path
 void setPin(char * path, char * flag) {
