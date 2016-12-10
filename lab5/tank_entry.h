@@ -1,11 +1,13 @@
 #ifndef _TANK_ENTRY_H
 #define _TANK_ENTRY_H
 
+#define _BSD_SOURCE
 #define _POSIX_C_SOURCE 199309L
 #include <stdlib.h>
 #include <sys/types.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include "lab4_common.h"
 
 #define SWITCH_GPIO_NUM 20
@@ -21,5 +23,7 @@
 #define BUZZER_SLOT "bone_pwm_P8_13"
 
 #define AIN1 "/sys/devices/ocp.3/helper.17/AIN1"
+
+void switchhandler(int, siginfo_t *, void *);
 
 #endif //_TANK_ENTRY_H

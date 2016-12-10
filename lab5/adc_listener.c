@@ -1,7 +1,7 @@
 #include "adc_listener.h"
 
 //Timer event structures
-struct sigaction sa;
+struct sigaction sa, selfdrive;
 struct sigevent se;
 
 //Timer metadata
@@ -16,25 +16,24 @@ int tot [4];
 int s;
 
 //Process ID of the tank process
-pid_t pid;
+pid_t pid_tank;
 
 //Process ID of the bt_listener
 pid_t pid_bt;
 
+//Self-Driving Flag
+int selfdriving_flag;
+
 int main() {
-  printf("THIS IS THE BEGINNING");
+  // initialize averaging to 0
   tot[0] = 0;
   tot[1] = 0;
   tot[2] = 0;
   tot[3] = 0;
-  
-  //tot1 = 0;
-  //tot2 = 0;
-  //tot3 = 0;
-  //tot4 = 0;
   s = 0;
- 
-  printf("IM HERE");
+
+  // self driving initially off
+  selfdriving_flag = 0;
   
   //get PID of tank process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
@@ -42,7 +41,7 @@ int main() {
   FILE *cmd = popen("pgrep -f tank.exe", "r");
 
   fgets(line, LEN, cmd);
-  pid = strtoul(line, NULL, 10);
+  pid_tank = strtoul(line, NULL, 10);
   printf("I FOUND TANK");
   
   //get PID of bt_listener
@@ -69,12 +68,19 @@ int main() {
   itimer.it_value = ts;
   timer_settime(timerid, 0, &itimer, NULL);  
 
+  // set up a sigaction for self drive
+  selfdrive.sa_flags = SA_SIGINFO;
+  selfdrive.sa_sigaction = &selfdriving_handler;
+  sigemptyset(&selfdrive.sa_mask);
+  sigaction(SIGUSR1, &selfdrive, NULL);
+  
   //Loop infinitely until killed
   while(1);
      
        
   return 0;
 }
+
 /*
 //Timer interrupt handler (this is with self driving from lab4)
 void timer_handler(int signum) {
@@ -100,6 +106,7 @@ void timer_handler(int signum) {
 
 //Timer interrupt handler (this is for lab5)
 void timer_handler(int signum){
+  int send_data;
   
   //Increment running total and sample number for each analog input
   tot[0] += read_adc(AIN1); // Front
@@ -110,40 +117,42 @@ void timer_handler(int signum){
   //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
   if (s == FREQUENCY -1){
 
-    printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s,tot[1]/s,tot[2]/s,tot[3]/s);
-    // if at least one or more running totals reach above threshold
-    // we need to change case statements based on what we want
+    //printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s, tot[1]/s, tot[2]/s, tot[3]/s);
+    
+    send_data = (tot[0] / s / 29);
+    send_data *= 64;
+    send_data += (tot[1] / s / 29);
+    send_data *= 64;
+    send_data += (tot[2] / s / 29);
+    send_data *= 64;
+    send_data += (tot[3] / s / 29);
 
-    /*
-    //if(tot1/s > = 900){ // only for testing front scenario
-    else if(tot1/s >= 900 || tot2/s >= 900 || tot3/s >= 900 || tot4/s >= 900){
-
-      
-      printf("You're too close!\n");
-      printf("%d\n", pid);
-      //send signal
-      kill(pid, SIGUSR1);
-
-      // Wait for tank to finish its interupt sequence
-      sleep(3);
-      
-    }*/
-
-    printf("tank ID: %d ;;;; bt_ID: %d\n", pid, pid_bt);
+    //printf("data2: %d\n",send_data);
+    
     
     // Poll results to the bt_listener
     union sigval adc_state;
-    adc_state.sival_ptr = tot;
-    //printf("value sent (ptr): %d\n",tot);
-    int out_Result = sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
-    printf("Result of sigqueue: %d/n",out_Result);
+    adc_state.sival_int = send_data;
+    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+
+    if(selfdriving_flag){
+      sigqueue(pid_tank, SIGUSR2, adc_state); //send signal to tank for self driving
+    }
+
     //Reset Sampling totals
+    send_data = 0;
     tot[0] = 0;
     tot[1] = 0;
     tot[2] = 0;
     tot[3] = 0;
     s = 0;
+    
   }
+}
+
+void selfdriving_handler(int signum, siginfo_t * siginfo, void * extra){
+  // set the self driving flag 
+  selfdriving_flag = siginfo->si_value.sival_int;
 }
 
 

@@ -39,9 +39,9 @@
 #define B_DPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/duty"
 #define B_RPATH "/sys/devices/ocp.3/pwm_test_P9_16.16/run"
 
-#define BUZZER_PPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/period" // originally .18 on all to get it to run with boot
-#define BUZZER_DPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/duty"
-#define BUZZER_RPATH "/sys/devices/ocp.3/pwm_test_P8_13.17/run"
+#define BUZZER_PPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/period" // originally .18 on all to get it to run with boot
+#define BUZZER_DPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/duty"
+#define BUZZER_RPATH "/sys/devices/ocp.3/pwm_test_P8_13.18/run"
 
 #define A_SLOT "bone_pwm_P9_14"
 #define B_SLOT "bone_pwm_P9_16"
@@ -51,6 +51,8 @@
 #define START_DUTY 100000
 
 #define T_BEEPS 250000000
+
+#define LEN 12
 
 struct Pwm {
   char *period_p;
@@ -71,6 +73,7 @@ struct Gpio {
 
 void sighandler(int, siginfo_t *, void *);
 void exithandler(int);
+void signal_handler_ADC(int, siginfo_t *, void *);
 void setDuty(struct Pwm *, int);
 void drive(int);
 void turn(int);

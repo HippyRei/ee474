@@ -1,8 +1,18 @@
 #include "tank_entry.h"
 
+struct sigaction onoff;
+
+int on;
+
 int main() {
   pid_t pid1, pid2;
 
+  //Set up appropriate interrupt handlers
+  onoff.sa_flags = SA_SIGINFO;
+  onoff.sa_sigaction = &switchhandler;
+  sigemptyset(&onoff.sa_mask);
+  sigaction(SIGUSR1, &onoff, NULL);
+  
   //Initialize PWM slots and ADC slots
   initializePWMSlots();
   activatePWM(A_SLOT);
@@ -25,59 +35,35 @@ int main() {
 
     t.tv_sec = 1;
 
-    int on = 0;
+    on = 0;
 
     while (!on) {
-      FILE *f = NULL;
-      while (!!access(SWITCH_VAL, R_OK));
-      f = fopen(SWITCH_VAL, "r");
-
-      // Buffer to store contents of GPIO
-      char buf[10];
-  
-      int b_len = fread(buf, 1, 10, f);
-      buf[9] = 0;
-  
-      fclose(f);
-
-      on = atoi(buf);
-
-      nanosleep(&t, &t2);
+      usleep(100000);
     }
     
     //Create a child to run the tank program.
     pid1 = fork();
     if (pid1 == 0) { //Tank process
-      static char *argv[] = {};
-      execv("/root/lab4/tank.exe", argv);
+      static char *argv[] = {NULL};
+      execv("/root/lab5/tank.exe", argv);
+      perror("First fork");
       exit(127);
     } else {
       //Create a child to run the acd_listener program
       pid2 = fork();
 
       if (pid2 == 0) { //adc_listener process
-	static char *argv[]={};
-	execv("/root/lab4/adc_listener.exe", argv);
+	static char *argv[]={NULL};
+        execv("/root/lab5/adc_listener.exe", argv);
+	perror("Second fork");
 	exit(127);
       }
     }
 
+    printf("created children\n");
+
     while (on) {
-      FILE *f = NULL;
-      while (!!access(SWITCH_VAL, R_OK));
-      f =  fopen(SWITCH_VAL, "r");
-
-      // Buffer to store contents of GPIO
-      char buf[10];
-  
-      int b_len = fread(buf, 1, 10, f);
-      buf[9] = 0;
-  
-      fclose(f);
-
-      on = atoi(buf);
-
-      nanosleep(&t, &t2);
+      usleep(100000);
     }
 
     //Kill the 2 children
@@ -89,6 +75,23 @@ int main() {
     //Wait on the 2 children
     waitpid(pid1, &status, 0);
     waitpid(pid2, &status, 0);
+
+    printf("killed children\n");
   }
   return 0;
 }
+
+
+
+// signal handler for switch to create children.
+void switchhandler(int signum, siginfo_t * siginfo, void * extra) {
+  int on_signal;
+
+  on_signal = siginfo->si_value.sival_int;
+
+  printf("previous on: %d\n",on);
+  printf("new on: %d\n", on_signal);
+
+  on = on_signal;
+}
+  

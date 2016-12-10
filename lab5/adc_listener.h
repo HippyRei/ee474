@@ -22,6 +22,7 @@
 #define LEN 12
 
 int read_adc(char *);
+void selfdriving_handler(int, siginfo_t *, void *);
 void timer_handler(int);
-
+ 
 #endif //ADC_LISTENER_H
