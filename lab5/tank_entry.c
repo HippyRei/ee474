@@ -81,16 +81,11 @@ int main() {
   return 0;
 }
 
-
-
-// signal handler for switch to create children.
+// signal handler for switch to create children
 void switchhandler(int signum, siginfo_t * siginfo, void * extra) {
   int on_signal;
 
   on_signal = siginfo->si_value.sival_int;
-
-  printf("previous on: %d\n",on);
-  printf("new on: %d\n", on_signal);
 
   on = on_signal;
 }
