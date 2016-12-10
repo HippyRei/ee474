@@ -38,15 +38,8 @@ int main() {
     setPin(GPIOS[i].direction_p, "out");
   }
 
-  //Activate blinker pins
-  //activateGPIO(49);
-  //activateGPIO(115);
-  //setPin(BL1_DIR, "out");
-  //setPin(BL2_DIR, "out");
-
   //Activate PWMs
   initializePWMSlots();
-
   for (int i = 0; i < NUM_PWM; i++) {
     activatePWM(PWMS[i].slot);
   }
@@ -58,8 +51,6 @@ int main() {
   isetPin(BUZZER_PPATH, 1000000);
   isetPin(BUZZER_DPATH, 500000);
 
-  printf("got here\n");
-  
   // set up signal handler for handling commands
   sa.sa_flags = SA_SIGINFO;
   sa.sa_sigaction = &sighandler;
@@ -80,7 +71,7 @@ int main() {
   // get PID of ADC
   while (pid_adc == 0){
     char line[LEN];
-    FILE *cmd = popen("pgrep -f adc_listener.ex", "r"); // b/c adc_listener.exe comes up as .ex
+    FILE *cmd = popen("pgrep -f adc_listener.ex", "r"); // b/c adc_listener.exe comes up as as .ex
     printf("adc_PID is %d\n", pid_adc);  
     fgets(line, LEN, cmd);
     pid_adc = strtoul(line, NULL, 10);
@@ -96,39 +87,32 @@ int main() {
   // initialize self drive to off
   selfdrive_flag = 0;
 
-  // initialize blocking signals
+  // initialize blocked set of signals for uninterruped execution
   sigset_t block_set;
   sigemptyset(&block_set);
   sigaddset(&block_set, SIGUSR2);
-  //sigaddset(&block_set, SIGUSR1);
-  
 
-  //if running, wait 0.1 seconds to stop motors
+  // continue to loop
   while(1) {
     usleep(1000000);
-    printf("looping\n");
-    //isetPin(GPIOS[4].value_p, 0);
-
 
     // self driving implementation
     while(selfdrive_flag){
-      printf("selfdrivingggggggggggg\n");
-
       usleep(1000000);
       
       drive(0xFAFA); // forward
 
       if (front > 800) {
-	if( left > right) {                             //right 
-	  sigprocmask(SIG_BLOCK, &block_set, NULL);
+	if( left > right) {                             // right 
+	  sigprocmask(SIG_BLOCK, &block_set, NULL);     // run uninterrupted from adc_listener
 	  drive(0x4040);
 	  usleep(1000000);
 	  drive(0xFA7A);    //turn right;
 	  usleep(1000000);
 	  drive(0xFAFA);
 	  sigprocmask(SIG_UNBLOCK, &block_set, NULL);
-	} else {                                        //left 
-	  sigprocmask(SIG_BLOCK, &block_set, NULL);
+	} else {                                        // left 
+	  sigprocmask(SIG_BLOCK, &block_set, NULL);     // run uninterrupted from adc_listener
 	  drive(0x4040);
 	  usleep(1000000);
 	  drive(0x7AFA);    //turn left;
@@ -136,24 +120,23 @@ int main() {
 	  drive(0xFAFA);
 	  sigprocmask(SIG_UNBLOCK, &block_set, NULL);
 	}
-
+      } else if (rear > 800) {
+	sigprocmask(SIG_BLOCK, &block_set, NULL);     // run uninterrupted from adc_listener
+        drive(0xFDFD);
+	usleep(1000000);
+	sigprocmask(SIG_UNBLOCK, &block_set, NULL);
       }
-      
-      
+
     }
   }
 }
 
-//signal handler for tank motors to turn
+// signal handler for tank motors to turn
 void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
-  //struct timespec t, t2;
   int command;
   union sigval self_drive;
-  printf("received drive signal\n");
   
   command = siginfo->si_value.sival_int;
-
-  printf("%d\n", command);
 
   if(command == 0xFF01){      // self drive on
     selfdrive_flag = 1;
@@ -174,7 +157,7 @@ void sighandler(int signum, siginfo_t * siginfo, void * extra ) {
   }
 }
 
-//signal handler for exit
+// signal handler for exit
 void exithandler(int signum) {
   //Turn everything off
   isetPin(GPIOS[4].value_p, 0);
@@ -186,10 +169,9 @@ void exithandler(int signum) {
   exit(0);
 }
 
-// signal handler of the ADC Data retrieval
+// signal handler of the ADC Data retrieval in self drive
 void signal_handler_ADC(int signum, siginfo_t * siginfo, void * extra ) {
   int adc_data;
-  printf("received adc data self drive mode!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   adc_data = siginfo->si_value.sival_int;
 
   // extract data
@@ -253,30 +235,6 @@ void drive(int command) {
   setDuty(&PWMS[1], rightduty);
 
   // standy off
-  isetPin(GPIOS[4].value_p, 1);
-}
-
-//Turn left if duty is positive or right if duty is negative.
-// Absolute duty determines speed of motion.
-void turn(int d) {
-  isetPin(GPIOS[4].value_p, 0);
-
-  isetPin(PWMS[0].run_p, 1);
-  isetPin(PWMS[1].run_p, 1);
-
-  if (d < 0) {
-    setPins(0x9);
-    d = d * -1;
-  } else {
-    setPins(0x6);
-  }
-
-  isetPin(PWMS[0].period_p, PERIOD);
-  isetPin(PWMS[1].period_p, PERIOD);
-
-  setDuty(&PWMS[0], d);
-  setDuty(&PWMS[1], d);
-
   isetPin(GPIOS[4].value_p, 1);
 }
 

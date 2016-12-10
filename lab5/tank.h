@@ -76,7 +76,6 @@ void exithandler(int);
 void signal_handler_ADC(int, siginfo_t *, void *);
 void setDuty(struct Pwm *, int);
 void drive(int);
-void turn(int);
 void setPins(int);
 
 #endif // TANK_H
