@@ -12,7 +12,6 @@
 #include <time.h>
 #include <termios.h>
 #include <fcntl.h>
-//#include <sys/signal.h>
 #include <sys/types.h>
 
 #define DEVPATH "/sys/devices/bone_capemgr.9/slots"
@@ -24,6 +23,6 @@
 #define UART1 "/dev/ttyO2"
 
 void enable_UART1();
-void signal_handler_IO (int status);   /* definition of signal handler */
+void signal_handler_IO (int status);  
 void signal_handler_ADC(int, siginfo_t *, void *);
 #endif //BT_LISTENER_H

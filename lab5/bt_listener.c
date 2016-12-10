@@ -1,45 +1,38 @@
 #include "bt_listener.h"
 
-//terminal interface structure.
+// Terminal interface structure.
 struct termios ti;
 
-// signal handler
+// Signal handlers for bluetooth drive commands and adc data
 struct sigaction saio, adc_receive;
 
+// Wait flag for receiving a bluetooth command
 int wait_flag = 1;
 
+// Wait flag for adc data
 int wait_adc_flag = 1;
 
+// Flag for self drive mode
 int self_drive_flag = 0;
 
 // Stores adc values in 3 bytes to send to controller.
-char adc_string[4] = "000\n";
+char adc_string[4] = "000\n"; //null terminated
 
 // Process ID of the tank_entry and tank processes.
 pid_t pid_tank_entry, pid_tank;
-
-// 
-// much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
+ 
+// Much of the serial input code taken from http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
 int main() {
-  int f; // serial file descriptor
-  int len, command;
-  unsigned char buffer[100];
+  int f;                     // serial file descriptor
+  int len, command;          // stores the length of a command and the command
+  unsigned char buffer[100]; // buffer to read from serial port
 
-  // set PIDs to 0
+  // Initialize PIDs to 0
   pid_tank = 0;
   pid_tank_entry = 0;
   
-  enable_UART1();
-
-  f = open(UART1, O_RDWR | O_NOCTTY | O_NONBLOCK);
-
-  if (f < 0) {
-    printf("file failed to open\n");
-  }
-
-  /* install the signal handler before making the device asynchronous */
+  // signal handler for bluetooth commands (asynchronous retreival)
   saio.sa_handler = signal_handler_IO;
-  //saio.sa_mask = 0;
   saio.sa_flags = 0;
   saio.sa_restorer = NULL;
   sigaction(SIGIO,&saio,NULL);
@@ -49,6 +42,15 @@ int main() {
   adc_receive.sa_sigaction = &signal_handler_ADC;
   sigemptyset(&adc_receive.sa_mask);
   sigaction(SIGUSR1, &adc_receive, NULL);
+
+  //set up serial port for bluetooth
+  enable_UART1();
+
+  f = open(UART1, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+  if (f < 0) {
+    printf("file failed to open\n");
+  }
   
   memset (&ti, 0, sizeof(ti));
 
@@ -58,7 +60,7 @@ int main() {
 
   // set file control options
   fcntl(f, F_SETOWN, getpid()); // enable this process to receive signal
-  fcntl(f, F_SETFL, O_ASYNC); // enable asynchronous execution
+  fcntl(f, F_SETFL, O_ASYNC);   // enable asynchronous execution
 
   cfsetospeed(&ti, BAUDRATE);
   cfsetispeed(&ti, BAUDRATE);
@@ -79,26 +81,20 @@ int main() {
   ti.c_cc[VTIME] = 0;
   tcflush(f, TCIFLUSH);
 
-  // define all the attributes into the file from termios struct
+  // define all the attributes from termios struct into the file
   if (tcsetattr(f, TCSANOW, &ti) != 0) {
     printf("tcsetattr failed\n");
   }
   printf("finished initializing %d\n",f);
-
-  // Initialize sequence checking connection.
-  write(f, "hello\n", 6);
-
   
-  // get PID of tank_entry process
-  //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
+  // get PID of tank_entry process and check whether it's valid or not
+  // modified from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
   while (!pid_tank_entry) {
     char line[LEN];
     FILE *cmd = popen("pgrep -f tank_entry.exe", "r");
     fgets(line, LEN, cmd);
     pid_tank_entry = strtoul(line, NULL, 10);
     pclose(cmd);
-    
-    printf("tank_ENTRY PID is %d\n", pid_tank_entry);
 
     // check if pid is valid
     int valid = kill(pid_tank_entry, 0);
@@ -110,34 +106,28 @@ int main() {
   
   // Continue to loop, only executes a read when interrupted by SIGIO
   while (1) {
-    usleep(100000);
+    usleep(100000);  
     
-    if (!wait_flag) {
+    if (!wait_flag) {    // If new data is available
+      // Read from serial port
       len = read(f, buffer, 100);
       buffer[len] = 0;
-  
-      if (len != 0) {
-	printf("%s\n", buffer);
-      } else {
-	printf("nothing read\n");
-      }
-
-      //send adc information if new info has been received
+      
+      // Send adc information across bluetooth if new info has been received
       if(!wait_adc_flag) {
         write(f, adc_string, 4);
       }
 
+      // Convert buffer information to 2 byte command
       command = buffer[0] * 256 + buffer[1];
 
-      printf("%X\n", command);
-
       // Analyze which command to execute.
-      if (command == 0xFFFF) {
+      if (command == 0xFFFF) {                 // on command
 	union sigval tank_state_on;
-	tank_state_on.sival_int = 1;                             // on command
+	tank_state_on.sival_int = 1;                          
 	sigqueue(pid_tank_entry, SIGUSR1, tank_state_on);
 
-	// get PID of tank process each time
+	// get PID of tank process each time, because it is a child of tank_entry
 	// from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
 	while (pid_tank == 0){
 	  char line[LEN];
@@ -145,8 +135,6 @@ int main() {
 	  fgets(line, LEN, cmd);
 	  pid_tank = strtoul(line, NULL, 10);
 	  pclose(cmd);
-	  
-	  printf("tank PID is %d\n", pid_tank);
 
 	  // check if pid is valid
 	  int valid = kill(pid_tank, 0);
@@ -155,9 +143,11 @@ int main() {
 	    pid_tank = 0;
 	  }
 	}
-	printf("tank PID is: %d\n", pid_tank);
 
-      } else if (command == 0xFF00) {                          // off command
+	//reset bufffer
+	memset(buffer, 0, 100);
+	
+      } else if (command == 0xFF00){         // off command
 	union sigval tank_state_off;
 	tank_state_off.sival_int = 0;
 	sigqueue(pid_tank_entry, SIGUSR1, tank_state_off);
@@ -167,9 +157,11 @@ int main() {
 
 	//reset bufffer
 	memset(buffer, 0, 100);
-      } else if ((command == 0xFF01 && !self_drive_flag) || (command == 0xFF02)) { // self drive
+	
+      } else if ((command == 0xFF01 && !self_drive_flag) || (command == 0xFF02)) {   // self drive on/off
 	union sigval tank_command;
-	printf("self drive command: %d\n", command);
+	tank_command.sival_int = command;
+	sigqueue(pid_tank, SIGUSR1, tank_command);
 
 	// set self drive flag
 	if (command == 0xFF01) {
@@ -177,18 +169,16 @@ int main() {
 	} else {
 	  self_drive_flag = 0;
 	}
-	tank_command.sival_int = command;
-	sigqueue(pid_tank, SIGUSR1, tank_command);
 
 	//reset bufffer
 	memset(buffer, 0, 100);
-      } else if (!self_drive_flag) {                                                 // drive command
+	
+      } else if (!self_drive_flag) {         // drive command
 	union sigval tank_drive;
-	printf("send drive command\n");
 	tank_drive.sival_int = command;
-	printf("command: %d\n", command);
 	sigqueue(pid_tank, SIGUSR1, tank_drive);
-      } else {
+	
+      } else {                               // disable certain commands in self drive mode
 	memset(buffer, 0, 100);
       }
 
@@ -199,6 +189,7 @@ int main() {
   close(f);
 }
 
+// enable serial port
 void enable_UART1() {
   // Attempt to open the file; loop until file is found
   FILE *f = NULL;
@@ -210,39 +201,22 @@ void enable_UART1() {
   fclose(f);
 }
 
-//signal handler for SIGIO
+// signal handler for SIGIO from serial port (for asynchronous acquisition)
 void signal_handler_IO (int status) {
-  printf("received command signal.\n");
   wait_flag = 0;
 }
 
 // signal handler of the ADC Data retrieval
 void signal_handler_ADC(int signum, siginfo_t * siginfo, void * extra ) {
-  int adc_data, front, right, left, rear;
-  printf("received adc data.\n");
+  int adc_data;
   adc_data = siginfo->si_value.sival_int;
-  int temp1 = adc_data;
 
-  printf("data: %d\n", adc_data);
-  
-  adc_string[2] = temp1 % 256;
-  temp1 /= 256;
-  adc_string[1] = temp1 % 256;
-  temp1 /= 256;
-  adc_string[0] = temp1;
-
-  printf("data: %s\n", adc_string);
-	 
-  
-  rear = (adc_data % 64) * 29;
-  adc_data /= 64;
-  left = (adc_data % 64) * 29;
-  adc_data /= 64;
-  right = (adc_data % 64) * 29;
-  adc_data /= 64;
-  front = adc_data * 29;
-
-  printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", front, right, left, rear);
+  // store data to send over serial port
+  adc_string[2] = adc_data % 256;
+  adc_data /= 256;
+  adc_string[1] = adc_data % 256;
+  adc_data /= 256;
+  adc_string[0] = adc_data;
 
   // set wait_adc_flag to 0
   wait_adc_flag = 0;
