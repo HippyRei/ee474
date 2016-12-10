@@ -32,14 +32,13 @@ int main() {
   tot[3] = 0;
   s = 0;
 
-  // self driving initially off
+  //self driving initially off
   selfdriving_flag = 0;
   
   //get PID of tank process
   //from http://stackoverflow.com/questions/8166415/how-to-get-the-pid-of-a-process-in-linux-in-c
   char line[LEN];
   FILE *cmd = popen("pgrep -f tank.exe", "r");
-
   fgets(line, LEN, cmd);
   pid_tank = strtoul(line, NULL, 10);
   printf("I FOUND TANK");
@@ -81,32 +80,9 @@ int main() {
   return 0;
 }
 
-/*
-//Timer interrupt handler (this is with self driving from lab4)
-void timer_handler(int signum) {
-  //Increment running total and sample number
-  tot += read_adc(AIN1);
-  s++;
-
-  //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
-  if (s == FREQUENCY - 1) {
-    if (tot / s >= 900) {
-      //send signal
-      kill(pid, SIGUSR1);
-
-      // Wait for tank to finish its interrupt sequence
-      sleep(3);
-      
-    }
-    //Reset the sampling totals
-    tot = 0;
-    s = 0;
-  }
-}*/
-
-//Timer interrupt handler (this is for lab5)
+//Timer interrupt handler
 void timer_handler(int signum){
-  int send_data;
+  int send_data;               //adc data stored as a 3 byte int
   
   //Increment running total and sample number for each analog input
   tot[0] += read_adc(AIN1); // Front
@@ -114,11 +90,10 @@ void timer_handler(int signum){
   tot[2] += read_adc(AIN3); // Left
   tot[3] += read_adc(AIN4); // Rear
   s++;
-  //If we've taken FREQUENCY samples, take the average, and interrupt tank.exe if necessary
+  
+  //If we've taken FREQUENCY samples, take the average, and store data as an int.
+  //Send data to bt_listener, if in selfdrive mode send data to tank
   if (s == FREQUENCY -1){
-
-    //printf("Front: %d ; Right: %d ; Left: %d ; Rear: %d\n", tot[0]/s, tot[1]/s, tot[2]/s, tot[3]/s);
-    
     send_data = (tot[0] / s / 29);
     send_data *= 64;
     send_data += (tot[1] / s / 29);
@@ -127,16 +102,14 @@ void timer_handler(int signum){
     send_data *= 64;
     send_data += (tot[3] / s / 29);
 
-    //printf("data2: %d\n",send_data);
-    
-    
-    // Poll results to the bt_listener
+    //Send data to the bt_listener
     union sigval adc_state;
     adc_state.sival_int = send_data;
-    sigqueue(pid_bt, SIGUSR1, adc_state); // send signal to bt_listener
+    sigqueue(pid_bt, SIGUSR1, adc_state); 
 
+    //Send data to tank in self drive mode
     if(selfdriving_flag){
-      sigqueue(pid_tank, SIGUSR2, adc_state); //send signal to tank for self driving
+      sigqueue(pid_tank, SIGUSR2, adc_state);
     }
 
     //Reset Sampling totals
@@ -150,8 +123,8 @@ void timer_handler(int signum){
   }
 }
 
+//Turns on/off self driving mode
 void selfdriving_handler(int signum, siginfo_t * siginfo, void * extra){
-  // set the self driving flag 
   selfdriving_flag = siginfo->si_value.sival_int;
 }
 
@@ -163,7 +136,7 @@ int read_adc(char *path) {
   while (!!access(path, W_OK));
   f = fopen(path, "r");
 
-  //Buffer to store contents of ACD pin
+  //Buffer to store contents of ADC pin
   char buf[101];
   
   int b_len = fread(buf, 1, 100, f);
