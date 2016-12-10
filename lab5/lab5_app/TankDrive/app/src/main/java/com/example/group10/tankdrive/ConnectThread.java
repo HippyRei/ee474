@@ -20,6 +20,7 @@ public class ConnectThread extends Thread {
     private InputStream mmInStream;
     private OutputStream mmOutStream;
 
+    // Singleton; maintain only one connection
     public static ConnectThread create() {
         if (ct == null) {
             return null;
@@ -34,6 +35,7 @@ public class ConnectThread extends Thread {
         return ct;
     }
 
+    // Constructor; only for use by create()
     private ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket,
         // because mmSocket is final
@@ -90,6 +92,7 @@ public class ConnectThread extends Thread {
         mmOutStream = tmpOut;
     }
 
+    // Start running the tank
     public void run() {
         Log.d("CREATE", "Run");
         byte[] bytes = new byte[4];

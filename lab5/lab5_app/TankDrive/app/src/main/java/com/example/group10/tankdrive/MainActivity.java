@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the self-drive button
     protected View.OnTouchListener sdClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -125,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the tilt drive button
     protected View.OnTouchListener tClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -142,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Log.d("CREATE", "Creating");
 
+        // Get all of the views we'll use
         ImageButton up = (ImageButton) findViewById(R.id.up);
         ImageButton down = (ImageButton) findViewById(R.id.down);
         ImageButton left = (ImageButton) findViewById(R.id.left);
@@ -150,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton sd = (ImageButton) findViewById(R.id.self_drive);
         ImageButton tilt = (ImageButton) findViewById(R.id.tilt);
 
+        // Set the views' listeners
         up.setOnTouchListener(uClick);
         down.setOnTouchListener(dClick);
         left.setOnTouchListener(lClick);
@@ -160,19 +164,23 @@ public class MainActivity extends AppCompatActivity {
 
         speed = (SeekBar) findViewById(R.id.speed);
 
+        // Set up bluetooth
         BluetoothDevice tank = null;
 
         if (ct == null) {
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            // Crash if the phone doesn't have a bluetooth adapter
             if (mBluetoothAdapter == null) {
                 return;
             }
 
+            // Prompt user to enable bluetooth
             if (!mBluetoothAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, requestCode);
             }
 
+            // Find the tank in the paired devices
             Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
             // If there are paired devices
             if (pairedDevices.size() > 0) {
@@ -182,12 +190,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            // Connect to the tank
             if (tank != null) {
                 ct = ConnectThread.create(tank);
             }
         }
     }
 
+    // Drive forward
     public void forward(View view) {
         Log.d("DRIVE", "Forward");
         byte duty = (byte) floor(((float) speed.getProgress() / speed.getMax()) * 126.0);
@@ -200,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Turn left
     public void left(View view) {
         Log.d("DRIVE", "Left");
         byte duty = (byte) floor(((float) speed.getProgress() / speed.getMax()) * 126.0);
@@ -212,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Turn right
     public void right(View view) {
         Log.d("DRIVE", "Right");
         byte duty = (byte) floor(((float) speed.getProgress() / speed.getMax()) * 126.0);
@@ -224,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Back up
     public void back(View view) {
         Log.d("DRIVE", "Backward");
         byte duty = (byte) floor(((float) speed.getProgress() / speed.getMax()) * 126.0);
@@ -236,6 +249,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Stop
     public void stop(View view) {
         Log.d("CREATE", "Stop");
         byte[] bytes = new byte[4];
@@ -247,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Power off
     public void power_off(View view) {
         byte[] bytes = new byte[4];
         bytes[0] = (byte) 0xFF;
@@ -257,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Start self-driving
     public void sd_start(View view) {
         byte[] bytes = new byte[4];
         bytes[0] = (byte) 0xFF;
@@ -267,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Turn off self-driving
     public void sd_off(View view) {
         byte[] bytes = new byte[4];
         bytes[0] = (byte) 0xFF;
@@ -277,6 +294,7 @@ public class MainActivity extends AppCompatActivity {
         ct.write(bytes);
     }
 
+    // Go into tilt mode
     public void tilt_on(View view) {
         Intent intent = new Intent(this, TiltMode.class);
         startActivity(intent);

@@ -27,12 +27,12 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tilt_mode);
         ct = ConnectThread.create();
+        // Get the sensor manager
         mSensorManager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
+        // Get the sensors
         mSGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        while (mSGeomagnetic == null) {
-            mSGeomagnetic = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        }
+        mSGeomagnetic = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         if (mSGeomagnetic == null) {
             Log.d("CREATE", "mSGeomagnetic sensor not available");
         } else {
@@ -45,12 +45,17 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
         mSensorManager.registerListener(this, mSGeomagnetic, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    // Do nothing because we don't care; only included to fulfill the abstract class
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
+    // Send drive data based on rotation to the tank
+    // Some of code retrieved from:
+    // http://stackoverflow.com/questions/27106607/get-rotation-and-display-in-degrees
     public void onSensorChanged(SensorEvent event) {
         Log.d("SENSOR", "Sensor changed: " + event.sensor.getType());
+        // Update the accelerometer data
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
             mGravity = event.values;
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
@@ -60,6 +65,7 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
             float I[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
             if (success) {
+                // Get the orientation based off of sensor data
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
                 azimut = orientation[0]; // orientation contains: azimut, pitch and roll
@@ -70,6 +76,7 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
             double angle = Math.toDegrees(pitch);
             Log.d("SENSOR_DATA", "Angle: " + angle);
 
+            // Turn left
             if (angle > 25 && angle < 90) {
                 byte[] bytes = new byte[4];
                 bytes[0] = (byte) 0x78;
@@ -78,6 +85,7 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
                 bytes[3] = (byte) 0x0A;
 
                 ct.write(bytes);
+                //Turn right
             } else if (angle < -25) {
                 byte[] bytes = new byte[4];
                 bytes[0] = (byte) 0xF8;
@@ -86,6 +94,7 @@ public class TiltMode extends AppCompatActivity implements SensorEventListener {
                 bytes[3] = (byte) 0x0A;
 
                 ct.write(bytes);
+                //Stop
             } else {
                 byte[] bytes = new byte[4];
                 bytes[0] = (byte) 0x00;
