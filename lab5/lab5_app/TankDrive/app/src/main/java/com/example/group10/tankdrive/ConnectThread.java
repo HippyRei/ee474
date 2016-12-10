@@ -20,6 +20,13 @@ public class ConnectThread extends Thread {
     private InputStream mmInStream;
     private OutputStream mmOutStream;
 
+    public static ConnectThread create() {
+        if (ct == null) {
+            return null;
+        }
+        return ct;
+    }
+
     public static ConnectThread create(BluetoothDevice device) {
         if (ct == null) {
             ct = new ConnectThread(device);

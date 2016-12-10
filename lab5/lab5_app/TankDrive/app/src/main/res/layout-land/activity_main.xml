@@ -74,9 +74,9 @@
         android:layout_height="50dp"
         android:src="@drawable/tilt_button_selector"
         android:background="@null"
-        android:layout_alignParentTop="true"
-        android:layout_alignLeft="@+id/seekBar"
-        android:layout_alignStart="@+id/seekBar" />
+        android:layout_alignTop="@+id/power"
+        android:layout_alignLeft="@+id/speed"
+        android:layout_alignStart="@+id/speed" />
 
     <ImageButton android:id="@+id/self_drive"
         android:scaleType="fitXY"
@@ -85,11 +85,11 @@
         android:layout_height="50dp"
         android:src="@drawable/self_drive_button_selector"
         android:background="@null"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/tilt"
-        android:layout_toEndOf="@+id/tilt"
         android:layout_marginLeft="15dp"
-        android:layout_marginStart="15dp"/>
+        android:layout_marginStart="15dp"
+        android:layout_alignTop="@+id/tilt"
+        android:layout_toRightOf="@+id/tilt"
+        android:layout_toEndOf="@+id/tilt" />
 
     <ImageButton android:id="@+id/power"
         android:scaleType="fitXY"
@@ -98,11 +98,11 @@
         android:layout_height="50dp"
         android:src="@drawable/power_button_selector"
         android:background="@null"
-        android:layout_alignParentTop="true"
+        android:layout_alignTop="@+id/up"
         android:layout_toRightOf="@+id/self_drive"
         android:layout_toEndOf="@+id/self_drive"
         android:layout_marginLeft="15dp"
-        android:layout_marginStart="15dp"/>
+        android:layout_marginStart="15dp" />
 
 
 </RelativeLayout>

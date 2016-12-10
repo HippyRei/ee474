@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
+import android.content.Intent;
 
 import static java.lang.Math.floor;
 import static java.lang.Math.round;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     protected ConnectThread ct = null;
     protected SeekBar speed = null;
 
+    // Listener for the up button
     protected View.OnTouchListener uClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the down button
     protected View.OnTouchListener dClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the left button
     protected View.OnTouchListener lClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -75,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the right button
     protected View.OnTouchListener rClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -89,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Listener for the power button
     protected View.OnTouchListener pClick = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -99,8 +105,32 @@ public class MainActivity extends AppCompatActivity {
                     ct.run();
                 }
                 v.setPressed(!v.isPressed());
-            } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                stop(v);
+            }
+            return true;
+        }
+    };
+
+    protected View.OnTouchListener sdClick = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                if (v.isPressed()) {
+                    sd_off(v);
+                } else {
+                    sd_start(v);
+                }
+                v.setPressed(!v.isPressed());
+            }
+            return true;
+        }
+    };
+
+    protected View.OnTouchListener tClick = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                tilt_on(v);
+                v.setPressed(!v.isPressed());
             }
             return true;
         }
@@ -117,12 +147,16 @@ public class MainActivity extends AppCompatActivity {
         ImageButton left = (ImageButton) findViewById(R.id.left);
         ImageButton right = (ImageButton) findViewById(R.id.right);
         ImageButton power = (ImageButton) findViewById(R.id.power);
+        ImageButton sd = (ImageButton) findViewById(R.id.self_drive);
+        ImageButton tilt = (ImageButton) findViewById(R.id.tilt);
 
         up.setOnTouchListener(uClick);
         down.setOnTouchListener(dClick);
         left.setOnTouchListener(lClick);
         right.setOnTouchListener(rClick);
         power.setOnTouchListener(pClick);
+        sd.setOnTouchListener(sdClick);
+        tilt.setOnTouchListener(tClick);
 
         speed = (SeekBar) findViewById(R.id.speed);
 
@@ -153,18 +187,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    /*
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        setContentView(R.layout.activity_main);
-        ImageButton up = (ImageButton) findViewById(R.id.up);
-
-        up.setOnTouchListener(uClick);
-    }
-    */
 
     public void forward(View view) {
         Log.d("DRIVE", "Forward");
@@ -233,6 +255,31 @@ public class MainActivity extends AppCompatActivity {
         bytes[3] = (byte) 0x0A;
 
         ct.write(bytes);
+    }
+
+    public void sd_start(View view) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) 0xFF;
+        bytes[1] = (byte) 0x01;
+        bytes[2] = (byte) 0x0D;
+        bytes[3] = (byte) 0x0A;
+
+        ct.write(bytes);
+    }
+
+    public void sd_off(View view) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) 0xFF;
+        bytes[1] = (byte) 0x02;
+        bytes[2] = (byte) 0x0D;
+        bytes[3] = (byte) 0x0A;
+
+        ct.write(bytes);
+    }
+
+    public void tilt_on(View view) {
+        Intent intent = new Intent(this, TiltMode.class);
+        startActivity(intent);
     }
 
     @Override
